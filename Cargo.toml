@@ -1,0 +1,29 @@
+[package]
+name = "edit-trail"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Find RAW sidecars by the edit operations applied to them"
+license = "MIT"
+repository = "https://github.com/B-Divyesh/sf-edit-trail-finder"
+homepage = "https://edit-trail-finder.sociobot.in"
+readme = "README.md"
+keywords = ["photography", "xmp", "darktable", "lightroom", "cli"]
+categories = ["command-line-utilities", "multimedia::images"]
+include = ["src/**", "tests/**", "Cargo.toml", "README.md", "LICENSE", "CHANGELOG.md"]
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "wrap_help"] }
+quick-xml = "0.38"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+walkdir = "2.5"
+
+[dev-dependencies]
+tempfile = "3.20"
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+panic = "abort"

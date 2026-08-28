@@ -1,0 +1,10 @@
+{
+  "name": "Edit Trail",
+  "short_name": "Edit Trail",
+  "description": "Find RAW photos by active edit operations in local sidecars.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [{ "src": "/mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

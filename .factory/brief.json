@@ -1,0 +1,30 @@
+{
+  "slug": "edit-trail-finder",
+  "title": "Edit Trail",
+  "territory": "games-creative",
+  "user": "Photographers using non-destructive RAW editors who need to find images by what was done to them—masking, denoise, crop, or specific active modules—rather than by filenames and folders.",
+  "evidence": [
+    {
+      "url": "https://discuss.pixls.us/t/56346.json",
+      "date": "2026-02-28",
+      "quote_or_summary": "A darktable user requests collection filters that find images with specific active modules, such as an active contrast module."
+    },
+    {
+      "url": "https://discuss.pixls.us/t/57262.json",
+      "date": "2026-04-25",
+      "quote_or_summary": "A separate darktable thread requests clearer organization around AI masking work, reinforcing that editing operations themselves become important search criteria."
+    }
+  ],
+  "recurrence": "Two 2026 darktable discussions centre on locating and managing work by edit operation, not merely image metadata.",
+  "current_workaround": "Remember folder locations, add ad-hoc tags, inspect history stacks one photo at a time, or export sidecars and search them manually.",
+  "incumbents_and_gap": "darktable and Lightroom catalogue images; their UI makes operation-level cross-project audits difficult. A sidecar index can serve this narrow search need without becoming a photo manager.",
+  "smallest_useful_product": "A local CLI plus static report that indexes XMP/sidecar edit metadata, lets users query active operations and combinations, and opens the source folder. Non-goals: RAW rendering, facial recognition, hosted photo libraries, or AI image editing.",
+  "success_measure": "A photographer finds every image using a named operation in a 10,000-photo sidecar library in under 30 seconds.",
+  "artifact_class": "cli",
+  "monetization": "one-time — the tool works on personal archives and should not require uploading private photos or catalogues.",
+  "constraints": "Read sidecars and metadata only; no image upload; support schema/version variation; do not index private image pixels unless explicitly requested.",
+  "est_build_effort": "S",
+  "why_distinct": "It indexes the edit trail as a first-class artifact rather than offering another DAM or AI culling service.",
+  "confidence": 4,
+  "state": "RESEARCHED"
+}

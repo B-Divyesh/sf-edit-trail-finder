@@ -82,3 +82,7 @@ image generator, then resized/encoded as WebP at or below 300 KB. Prompt:
 
 The route diagram, icons, wordmark, and operation tokens are hand-authored in
 HTML/CSS/SVG inside the repository and are MIT-licensed with the product.
+The raster was generated on 27 August 2026 with the factory `factory-image`
+deployment, then stripped and converted from PNG to a 148 KB WebP using
+ImageMagick. The final asset is original to this product and distributed under
+the repository’s MIT license.

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#09090b" />
+    <meta name="description" content="Edit Trail privacy policy: local sidecar processing, no analytics, and minimal license storage." />
+    <link rel="canonical" href="https://edit-trail-finder.sociobot.in/privacy/" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <title>Privacy — Edit Trail</title>
+  </head>
+  <body class="legal-page" data-page="privacy">
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="offline-bar" data-offline hidden role="status">Offline mode — this policy remains available.</div>
+    <header class="site-header"><a class="brand" href="/" aria-label="Edit Trail home"><svg aria-hidden="true" viewBox="0 0 42 42"><path d="M7 7h12v12H7zM23 7h12v12H23zM7 23h12v12H7z"/><path class="trail" d="M25 29h10m-5-5 5 5-5 5"/></svg><span>Edit Trail</span></a><nav aria-label="Page navigation"><a href="/">Home</a><a class="nav-cta" href="/terms/">Terms</a></nav></header>
+    <main id="main">
+      <p class="eyebrow">Policy / plain language</p><h1>Privacy</h1><p class="updated">Effective 27 August 2026</p>
+      <p>Edit Trail is designed so your photo archive stays yours. The CLI runs locally. It reads supported sidecar metadata and writes an index on your computer. It does not read image pixels, upload files, call analytics services, or transmit your index.</p>
+      <h2>What the CLI stores</h2><p>The local index contains sidecar paths, inferred source-image paths, modification timestamps, editor family, active operation names, and parse warnings. You choose its location and may delete it at any time.</p>
+      <h2>Browser demo</h2><p>Sidecars selected or pasted into the browser demo are processed in browser memory. Their contents are not sent to our servers and disappear when the tab closes. The site uses a service worker cache so documentation and the demo can reopen offline.</p>
+      <h2>Licenses and payment</h2><p>If you buy or restore a Supporter license, the license token and last verification result are stored in your browser’s local storage. Verification sends only the token to the Sociobot billing API at <code>api.sociobot.in</code>, at most once per day. Sociobot/Dodo is the merchant of record and processes payment details on its hosted checkout; this site never receives card data.</p>
+      <h2>Analytics and third parties</h2><p>There are no analytics, advertising pixels, third-party fonts, or runtime CDN scripts. The checkout and license verification requests occur only when you choose to buy or provide a license.</p>
+      <h2>Your control</h2><p>Clear this site’s storage in your browser to remove the cached license and offline files. Delete <code>.edit-trail.json</code> to remove a CLI index. For privacy questions, open an issue in the public project repository without including license tokens or private paths.</p>
+    </main>
+    <footer><div class="brand"><svg aria-hidden="true" viewBox="0 0 42 42"><path d="M7 7h12v12H7zM23 7h12v12H23zM7 23h12v12H7z"/><path class="trail" d="M25 29h10m-5-5 5 5-5 5"/></svg><span>Edit Trail</span></div><nav aria-label="Legal"><a href="/">Home</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-edit-trail-finder">Source</a></nav></footer>
+    <div class="toast" data-toast role="status" aria-live="polite"></div><script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

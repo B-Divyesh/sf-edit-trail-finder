@@ -1,6 +1,12 @@
 node_modules/
 dist/
+target/
 .env
 *.log
 graphify-out/
+test-results/
+playwright-report/
+.factory/evidence/
 .DS_Store
+.edit-trail.json
+edit-trail-report.html

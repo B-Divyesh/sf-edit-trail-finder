@@ -85,4 +85,6 @@ HTML/CSS/SVG inside the repository and are MIT-licensed with the product.
 The raster was generated on 27 August 2026 with the factory `factory-image`
 deployment, then stripped and converted from PNG to a 148 KB WebP using
 ImageMagick. The final asset is original to this product and distributed under
-the repository’s MIT license.
+the repository’s MIT license. Responsive 720 px (43 KB) and 1080 px (87 KB)
+derivatives accompany the 1440 px source so mobile never downloads the desktop
+hero unnecessarily.

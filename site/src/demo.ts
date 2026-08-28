@@ -67,18 +67,40 @@ function splitDocuments(input: string): { name: string; xml: string }[] {
 const xmlName = /^[A-Za-z_][A-Za-z0-9_.-]*(?::[A-Za-z_][A-Za-z0-9_.-]*)?/;
 const xmlDeclaration = /^<\?xml\s+version=(['"])1\.[0-9]\1(?:\s+encoding=(['"])[A-Za-z][A-Za-z0-9._-]*\2)?(?:\s+standalone=(['"])(?:yes|no)\3)?\s*\?>$/;
 
-type XmlElement = { name: string; namespaces: Map<string, string> };
+type XmlAttribute = { name: string; localName: string; value: string };
+type XmlElement = { name: string; localName: string; namespaces: Map<string, string>; attributes: XmlAttribute[] };
 
-function entitiesAreValid(value: string): boolean {
-  let index = value.indexOf("&");
-  while (index !== -1) {
-    const end = value.indexOf(";", index + 1);
-    if (end === -1) return false;
-    const entity = value.slice(index + 1, end);
-    if (!/^(?:amp|apos|gt|lt|quot|#[0-9]+|#x[0-9a-fA-F]+)$/.test(entity)) return false;
-    index = value.indexOf("&", end + 1);
+function isXmlCharacter(codePoint: number): boolean {
+  return codePoint === 0x09 || codePoint === 0x0a || codePoint === 0x0d
+    || (codePoint >= 0x20 && codePoint <= 0xd7ff)
+    || (codePoint >= 0xe000 && codePoint <= 0xfffd)
+    || (codePoint >= 0x10000 && codePoint <= 0x10ffff);
+}
+
+function decodeXmlValue(value: string): string | undefined {
+  const replacements: Record<string, string> = { amp: "&", apos: "'", gt: ">", lt: "<", quot: "\"" };
+  let decoded = "";
+  let position = 0;
+
+  while (position < value.length) {
+    const entityStart = value.indexOf("&", position);
+    if (entityStart === -1) return decoded + value.slice(position);
+    decoded += value.slice(position, entityStart);
+    const entityEnd = value.indexOf(";", entityStart + 1);
+    if (entityEnd === -1) return undefined;
+    const entity = value.slice(entityStart + 1, entityEnd);
+    if (entity in replacements) {
+      decoded += replacements[entity];
+    } else {
+      const numeric = /^#([0-9]+)$/.exec(entity)?.[1];
+      const hexadecimal = /^#x([0-9a-fA-F]+)$/.exec(entity)?.[1];
+      const codePoint = numeric ? Number.parseInt(numeric, 10) : hexadecimal ? Number.parseInt(hexadecimal, 16) : Number.NaN;
+      if (!Number.isSafeInteger(codePoint) || !isXmlCharacter(codePoint)) return undefined;
+      decoded += String.fromCodePoint(codePoint);
+    }
+    position = entityEnd + 1;
   }
-  return true;
+  return decoded;
 }
 
 function prefixOf(name: string): string | undefined {
@@ -86,18 +108,22 @@ function prefixOf(name: string): string | undefined {
   return separator === -1 ? undefined : name.slice(0, separator);
 }
 
-/**
- * Reject malformed XML before DOMParser sees it. Chromium builds a styled
- * parser-error document for malformed XML; strict CSP correctly blocks those
- * generated inline styles and reports console errors. This small, conservative
- * well-formedness check supports the XMP subset used by the local demo and
- * treats anything ambiguous as malformed without parsing it in the browser.
- */
-export function isWellFormedXml(input: string): boolean {
-  const xml = input.trim();
-  if (!xml || /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(xml)) return false;
+function localNameOf(name: string): string {
+  return name.slice(name.indexOf(":") + 1);
+}
 
-  const elements: XmlElement[] = [];
+/**
+ * Parse the conservative XML subset used by XMP sidecars without DOMParser.
+ * Chromium builds a styled parser-error document for malformed XML, which a
+ * strict CSP correctly rejects with console errors. Keeping both validation
+ * and extraction here means malformed input can never create that document.
+ */
+function parseXmlElements(input: string): XmlElement[] | undefined {
+  const xml = input.trim();
+  if (!xml || [...xml].some((character) => !isXmlCharacter(character.codePointAt(0) ?? 0))) return undefined;
+
+  const stack: XmlElement[] = [];
+  const parsedElements: XmlElement[] = [];
   const initialNamespaces = new Map([["xml", "http://www.w3.org/XML/1998/namespace"]]);
   let position = 0;
   let rootCount = 0;
@@ -107,37 +133,37 @@ export function isWellFormedXml(input: string): boolean {
     const nextTag = xml.indexOf("<", position);
     if (nextTag === -1) {
       const text = xml.slice(position);
-      return elements.length === 0
-        ? text.trim() === "" && rootCount === 1
-        : !text.includes("]]>") && entitiesAreValid(text) && rootCount === 1;
+      if (stack.length === 0 ? text.trim() !== "" : text.includes("]]>") || decodeXmlValue(text) === undefined) return undefined;
+      position = xml.length;
+      break;
     }
 
     const text = xml.slice(position, nextTag);
-    if (text.includes("]]>") || !entitiesAreValid(text) || (elements.length === 0 && text.trim())) return false;
+    if (text.includes("]]>") || decodeXmlValue(text) === undefined || (stack.length === 0 && text.trim())) return undefined;
     position = nextTag;
 
     if (xml.startsWith("<!--", position)) {
       const end = xml.indexOf("-->", position + 4);
-      if (end === -1 || xml.slice(position + 4, end).includes("--")) return false;
+      if (end === -1 || xml.slice(position + 4, end).includes("--")) return undefined;
       position = end + 3;
       continue;
     }
 
     if (xml.startsWith("<![CDATA[", position)) {
       const end = xml.indexOf("]]>", position + 9);
-      if (end === -1 || elements.length === 0) return false;
+      if (end === -1 || stack.length === 0) return undefined;
       position = end + 3;
       continue;
     }
 
     if (xml.startsWith("<?", position)) {
       const end = xml.indexOf("?>", position + 2);
-      if (end === -1) return false;
+      if (end === -1) return undefined;
       const instruction = xml.slice(position, end + 2);
       const target = /^<\?([A-Za-z_][A-Za-z0-9_.:-]*)/.exec(instruction)?.[1];
-      if (!target) return false;
+      if (!target) return undefined;
       if (target.toLowerCase() === "xml") {
-        if (position !== 0 || sawDeclaration || rootCount > 0 || !xmlDeclaration.test(instruction)) return false;
+        if (position !== 0 || sawDeclaration || rootCount > 0 || !xmlDeclaration.test(instruction)) return undefined;
         sawDeclaration = true;
       }
       position = end + 2;
@@ -146,20 +172,20 @@ export function isWellFormedXml(input: string): boolean {
 
     // The demo does not need DTDs or entity declarations. Rejecting them also
     // prevents parser-specific recovery for input outside supported sidecars.
-    if (xml.startsWith("<!", position)) return false;
+    if (xml.startsWith("<!", position)) return undefined;
 
     if (xml.startsWith("</", position)) {
       const closing = new RegExp(`^</(${xmlName.source.slice(1)})\\s*>`).exec(xml.slice(position));
-      if (!closing || elements.pop()?.name !== closing[1]) return false;
+      if (!closing || stack.pop()?.name !== closing[1]) return undefined;
       position += closing[0].length;
       continue;
     }
 
     const opening = xmlName.exec(xml.slice(position + 1));
-    if (!opening) return false;
+    if (!opening) return undefined;
     const name = opening[0];
     position += name.length + 1;
-    const attributes: { name: string; value: string }[] = [];
+    const attributes: XmlAttribute[] = [];
     const seenAttributes = new Set<string>();
     let selfClosing = false;
     let closedStartTag = false;
@@ -169,64 +195,79 @@ export function isWellFormedXml(input: string): boolean {
       while (/\s/.test(xml[position] ?? "")) position += 1;
       if (xml.startsWith("/>", position)) { selfClosing = true; closedStartTag = true; position += 2; break; }
       if (xml[position] === ">") { closedStartTag = true; position += 1; break; }
-      if (position === beforeWhitespace) return false;
+      if (position === beforeWhitespace) return undefined;
 
       const attribute = xmlName.exec(xml.slice(position));
-      if (!attribute || seenAttributes.has(attribute[0])) return false;
+      if (!attribute || seenAttributes.has(attribute[0])) return undefined;
       seenAttributes.add(attribute[0]);
       position += attribute[0].length;
       while (/\s/.test(xml[position] ?? "")) position += 1;
-      if (xml[position] !== "=") return false;
+      if (xml[position] !== "=") return undefined;
       position += 1;
       while (/\s/.test(xml[position] ?? "")) position += 1;
       const quote = xml[position];
-      if (quote !== '"' && quote !== "'") return false;
+      if (quote !== '"' && quote !== "'") return undefined;
       const valueStart = ++position;
       const valueEnd = xml.indexOf(quote, valueStart);
-      if (valueEnd === -1) return false;
-      const value = xml.slice(valueStart, valueEnd);
-      if (value.includes("<") || !entitiesAreValid(value)) return false;
-      attributes.push({ name: attribute[0], value });
+      if (valueEnd === -1) return undefined;
+      const rawValue = xml.slice(valueStart, valueEnd);
+      const value = decodeXmlValue(rawValue);
+      if (rawValue.includes("<") || value === undefined) return undefined;
+      attributes.push({ name: attribute[0], localName: localNameOf(attribute[0]), value });
       position = valueEnd + 1;
     }
 
-    if (!closedStartTag || rootCount > 0 && elements.length === 0) return false;
-    const namespaces = new Map(elements.at(-1)?.namespaces ?? initialNamespaces);
+    if (!closedStartTag || rootCount > 0 && stack.length === 0) return undefined;
+    const namespaces = new Map(stack.at(-1)?.namespaces ?? initialNamespaces);
     for (const attribute of attributes) {
       if (attribute.name === "xmlns") namespaces.set("", attribute.value);
       if (attribute.name.startsWith("xmlns:")) {
         const prefix = attribute.name.slice("xmlns:".length);
-        if (prefix === "xml" || prefix === "xmlns" || !attribute.value) return false;
+        if (prefix === "xmlns" || !attribute.value) return undefined;
+        if (prefix === "xml" && attribute.value !== initialNamespaces.get("xml")) return undefined;
         namespaces.set(prefix, attribute.value);
       }
     }
     const elementPrefix = prefixOf(name);
-    if (elementPrefix && !namespaces.has(elementPrefix)) return false;
+    if (elementPrefix && !namespaces.has(elementPrefix)) return undefined;
     if (attributes.some((attribute) => {
       const prefix = prefixOf(attribute.name);
       return prefix && prefix !== "xmlns" && !namespaces.has(prefix);
-    })) return false;
+    })) return undefined;
 
-    if (elements.length === 0) rootCount += 1;
-    if (!selfClosing) elements.push({ name, namespaces });
+    const expandedAttributes = new Set<string>();
+    for (const attribute of attributes.filter(({ name }) => name !== "xmlns" && !name.startsWith("xmlns:"))) {
+      const prefix = prefixOf(attribute.name);
+      const expandedName = `${prefix ? namespaces.get(prefix) : ""}|${attribute.localName}`;
+      if (expandedAttributes.has(expandedName)) return undefined;
+      expandedAttributes.add(expandedName);
+    }
+
+    if (stack.length === 0) rootCount += 1;
+    const element = { name, localName: localNameOf(name), namespaces, attributes };
+    parsedElements.push(element);
+    if (!selfClosing) stack.push(element);
   }
 
-  return elements.length === 0 && rootCount === 1;
+  return stack.length === 0 && rootCount === 1 ? parsedElements : undefined;
+}
+
+export function isWellFormedXml(input: string): boolean {
+  return parseXmlElements(input) !== undefined;
 }
 
 export function parseSidecars(input: string): DemoRecord[] {
   if (!input.trim()) return [];
   return splitDocuments(input).map(({ name, xml }) => {
-    if (!isWellFormedXml(xml)) throw new Error(`Could not parse ${name}. Check that its XML is complete.`);
-    const document = new DOMParser().parseFromString(xml, "application/xml");
-    if (document.querySelector("parsererror")) throw new Error(`Could not parse ${name}. Check that its XML is complete.`);
+    const elements = parseXmlElements(xml);
+    if (!elements) throw new Error(`Could not parse ${name}. Check that its XML is complete.`);
     const operations = new Set<string>();
     let editor = "Generic XMP";
-    const description = [...document.querySelectorAll("*")].find((node) => node.localName === "Description");
-    const historyEnd = Number.parseInt([...description?.attributes ?? []].find((attr) => attr.localName === "history_end")?.value ?? "", 10);
+    const description = elements.find((element) => element.localName === "Description");
+    const historyEnd = Number.parseInt(description?.attributes.find((attribute) => attribute.localName === "history_end")?.value ?? "", 10);
 
-    for (const element of document.querySelectorAll("*")) {
-      const attrs = [...element.attributes];
+    for (const element of elements) {
+      const attrs = element.attributes;
       const operation = attrs.find((attr) => ["operation", "module", "tool"].includes(attr.localName));
       const enabled = attrs.find((attr) => ["enabled", "active", "applied"].includes(attr.localName));
       const step = Number.parseInt(attrs.find((attr) => ["num", "index", "step"].includes(attr.localName))?.value ?? "", 10);

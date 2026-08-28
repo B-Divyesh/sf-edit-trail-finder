@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterRecords, isWellFormedXml, normalizeOperation } from "./demo";
+import { filterRecords, isWellFormedXml, normalizeOperation, parseSidecars, SAMPLE } from "./demo";
 
 describe("sidecar demo vocabulary", () => {
   it("matches the CLI's documented aliases", () => {
@@ -22,6 +22,16 @@ describe("sidecar demo vocabulary", () => {
     expect(isWellFormedXml("<sidecar><entry></sidecar>")).toBe(false);
     expect(isWellFormedXml("<rdf:Description />")).toBe(false);
     expect(isWellFormedXml("<sidecar value=\"a & b\" />")).toBe(false);
+    expect(isWellFormedXml("<sidecar value=\"&#0;\" />")).toBe(false);
     expect(isWellFormedXml("<!DOCTYPE sidecar><sidecar />")).toBe(false);
+  });
+
+  it("extracts the documented sidecars without invoking DOMParser", () => {
+    expect(globalThis.DOMParser).toBeUndefined();
+    expect(parseSidecars(SAMPLE)).toEqual([
+      { name: "night-market-1842.NEF.xmp", editor: "darktable", operations: ["crop", "denoise", "exposure", "masking"] },
+      { name: "lantern-0917.ARW.xmp", editor: "Adobe Camera Raw / Lightroom", operations: ["crop", "denoise", "exposure", "masking"] },
+      { name: "after-rain-2201.RAF.xmp", editor: "darktable", operations: ["color balance rgb", "crop"] }
+    ]);
   });
 });

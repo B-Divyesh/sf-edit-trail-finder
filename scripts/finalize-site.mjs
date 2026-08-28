@@ -12,7 +12,7 @@ async function files(directory) {
 
 const urls = (await files(root))
   .map((path) => relative(root, path).split(sep).join("/"))
-  .filter((path) => path !== "sw.js" && path !== "_headers")
+  .filter((path) => path !== "sw.js" && path !== "_headers" && path !== "staticwebapp.config.json")
   .map((path) => path === "index.html" ? "/" : path.endsWith("/index.html") ? `/${path.slice(0, -10)}` : `/${path}`)
   .sort();
 const workerPath = resolve(root, "sw.js");

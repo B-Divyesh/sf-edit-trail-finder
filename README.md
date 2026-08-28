@@ -95,9 +95,12 @@ credentials; this repository does not publish).
 
 ## Deployment
 
-The factory deploys `dist/site` to the static product domain. No secrets,
-analytics, or third-party runtime assets are required. Billing uses only the
-hosted Sociobot checkout and verification API; it is not needed by the CLI.
+The factory deploys `dist/site` to Azure Static Web Apps at the static product
+domain. `site/public/staticwebapp.config.json` travels with that build and
+sets the production CSP, Permissions-Policy, and immutable caching for hashed
+assets and the original WebP artwork. No secrets, analytics, or third-party
+runtime assets are required. Billing uses only the hosted Sociobot checkout
+and verification API; it is not needed by the CLI.
 
 ## License
 

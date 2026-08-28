@@ -1,4 +1,15 @@
 //! Parsing, indexing, and querying for Edit Trail.
+//!
+//! ```no_run
+//! use edit_trail::{build_index, query_index, MatchMode};
+//! use std::path::Path;
+//!
+//! let index = build_index(Path::new("/photos"), false, false)?;
+//! let wanted = vec!["denoise".to_string(), "crop".to_string()];
+//! let matches = query_index(&index, &wanted, MatchMode::All);
+//! println!("{} files match", matches.len());
+//! # Ok::<(), std::io::Error>(())
+//! ```
 
 use quick_xml::Reader;
 use quick_xml::events::{BytesStart, Event};
@@ -230,12 +241,17 @@ fn parse_xml(content: &str) -> Result<(String, Vec<Operation>, Vec<String>), Str
     for (name, active) in inferred {
         modules.entry(name).or_insert((u32::MAX, active));
     }
-    let operations = modules
+    let mut consolidated: BTreeMap<String, bool> = BTreeMap::new();
+    for (key, (_, active)) in modules {
+        let name = key.split('\0').next().unwrap_or(&key).to_string();
+        consolidated
+            .entry(name)
+            .and_modify(|existing| *existing |= active)
+            .or_insert(active);
+    }
+    let operations = consolidated
         .into_iter()
-        .map(|(key, (_, active))| Operation {
-            name: key.split('\0').next().unwrap_or(&key).to_string(),
-            active,
-        })
+        .map(|(name, active)| Operation { name, active })
         .collect();
     Ok((editor, operations, Vec::new()))
 }
@@ -381,10 +397,14 @@ pub fn normalize_operation(value: &str) -> String {
     let clean = clean.split_whitespace().collect::<Vec<_>>().join(" ");
     match clean.as_str() {
         "noise reduction"
+        | "noisereduction"
         | "denoiseprofile"
         | "raw denoise"
         | "impulse denoise"
-        | "color noise reduction" => "denoise".into(),
+        | "color noise reduction"
+        | "directional pyramid denoising"
+        | "deepprime" => "denoise".into(),
+        "contrast brightness saturation" => "contrast".into(),
         "rotate and perspective" | "perspective correction" => "perspective".into(),
         "graduated filter" | "local adjustments" | "mask manager" | "masks manager" => {
             "masking".into()
@@ -464,5 +484,34 @@ mod tests {
             .map(|op| op.name.as_str())
             .collect();
         assert!(names.contains("crop") && names.contains("denoise") && names.contains("masking"));
+    }
+
+    #[test]
+    fn honours_history_boundary_and_consolidates_instances() {
+        let xml = r#"<x:xmpmeta xmlns:x="x" xmlns:d="d"><d:Description d:history_end="3"><d:li d:num="0" d:operation="exposure" d:enabled="1" d:multi_priority="0"/><d:li d:num="1" d:operation="exposure" d:enabled="1" d:multi_priority="1"/><d:li d:num="2" d:operation="crop" d:enabled="0"/><d:li d:num="3" d:operation="contrast" d:enabled="1"/></d:Description></x:xmpmeta>"#;
+        let (_, operations, _) = parse_xml(xml).unwrap();
+        assert_eq!(
+            operations.iter().filter(|op| op.name == "exposure").count(),
+            1
+        );
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "exposure" && op.active)
+        );
+        assert!(operations.iter().any(|op| op.name == "crop" && !op.active));
+        assert!(!operations.iter().any(|op| op.name == "contrast"));
+    }
+
+    #[test]
+    fn parses_rawtherapee_sections() {
+        let (_, operations, _) =
+            parse_pp3("[Crop]\nEnabled=true\n[Directional Pyramid Denoising]\nEnabled=1\n");
+        assert!(operations.iter().any(|op| op.name == "crop" && op.active));
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "denoise" && op.active)
+        );
     }
 }

@@ -89,7 +89,7 @@ npm run build
 
 `npm run build` compiles the release binary and the Vite documentation site.
 Deployable output lands in `dist/`, with the site at `dist/site/index.html` and
-the Linux binary at `dist/downloads/edit-trail-linux-x86_64`. Package readiness
+the Linux binary at `dist/site/downloads/edit-trail-linux-x86_64`. Package readiness
 can be checked with `cargo package --allow-dirty` (the factory owns publishing
 credentials; this repository does not publish).
 

@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+const productionCsp = "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' https://api.sociobot.in; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in";
+
 test("home completes the core demo with no serious accessibility issues", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
@@ -17,10 +19,17 @@ test("home completes the core demo with no serious accessibility issues", async 
 });
 
 test("demo exposes actionable malformed and empty states", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
+  await page.route("**/", async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, headers: { ...response.headers(), "content-security-policy": productionCsp } });
+  });
   await page.goto("/#demo");
   await page.locator("#sidecar-input").fill("<broken");
   await page.getByRole("button", { name: /Find matching files/ }).click();
   await expect(page.locator("[data-demo-status]")).toContainText("Could not parse");
+  expect(consoleErrors).toEqual([]);
   await page.locator("#sidecar-input").fill("");
   await page.getByRole("button", { name: /Find matching files/ }).click();
   await expect(page.locator("[data-demo-status]")).toContainText("0 of 0 sidecars");

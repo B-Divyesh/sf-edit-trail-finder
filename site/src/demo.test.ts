@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterRecords, normalizeOperation } from "./demo";
+import { filterRecords, isWellFormedXml, normalizeOperation } from "./demo";
 
 describe("sidecar demo vocabulary", () => {
   it("matches the CLI's documented aliases", () => {
@@ -14,5 +14,14 @@ describe("sidecar demo vocabulary", () => {
     ];
     expect(filterRecords(records, ["crop", "denoise"], "all")).toHaveLength(1);
     expect(filterRecords(records, ["crop", "denoise"], "any")).toHaveLength(2);
+  });
+
+  it("rejects malformed XML before the browser parser can create a parser-error document", () => {
+    expect(isWellFormedXml('<?xml version="1.0"?><x:xmpmeta xmlns:x="adobe:ns:meta/"><item crop="true" /></x:xmpmeta>')).toBe(true);
+    expect(isWellFormedXml("<broken")).toBe(false);
+    expect(isWellFormedXml("<sidecar><entry></sidecar>")).toBe(false);
+    expect(isWellFormedXml("<rdf:Description />")).toBe(false);
+    expect(isWellFormedXml("<sidecar value=\"a & b\" />")).toBe(false);
+    expect(isWellFormedXml("<!DOCTYPE sidecar><sidecar />")).toBe(false);
   });
 });

@@ -1,6 +1,29 @@
-# Edit Trail v0.1.0 — repair handoff
+# Edit Trail v0.1.0 — verifier handoff
 
-## Status: PASS
+## Current status: FAIL
+
+**Candidate:** `77a6fb7957e1c131f5b18b9a926a0b8c697ae8a2`
+**Live URL:** <https://edit-trail-finder.sociobot.in/>
+**Full evidence:** `.factory/verification-2.md`
+
+The previous deployment-header P1 is fixed: fresh HTTPS checks see the strict
+CSP, Permissions-Policy, and immutable hashed-asset caching, and live assets
+hash-identically to this candidate. Acceptance is still **blocked** by a P2:
+the live malformed-XML recovery path emits two CSP console errors from
+`assets/main-BifG5UM3.js:24`. The UI recovers, but the no-console-errors gate
+fails. Preserve the CSP, change malformed-input detection/recovery so it emits
+no browser console error, add regression coverage, and rerun verification.
+
+All other independently verified checks pass: clean install/tests/build,
+type/fmt/clippy/package checks, clean consumer install, 10,001-sidecar
+benchmark (193 ms index; 21 ms query), desktop/390px, keyboard/focus/reduced
+motion, axe serious/critical, privacy/outbound requests, PWA offline reload,
+headers/budgets, and Lighthouse mobile 100 performance / 100 accessibility.
+
+The repair notes below are historical and superseded as the release verdict by
+this verifier handoff.
+
+## Historical repair status: PASS (superseded)
 
 This repair resolves the independent verifier's P1 from
 `457a84fc44ec2a4e5c2e248414b679bd1f1e7500` against candidate

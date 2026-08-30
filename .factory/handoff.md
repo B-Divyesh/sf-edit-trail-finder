@@ -3,8 +3,8 @@
 ## Status: complete
 
 Repaired the full adversarial review against base
-`63d20458787e0b11760f69c76219009d16350ade`. The repair commit is recorded in
-Git history for this work order. Production was deployed as Static Web Apps
+`63d20458787e0b11760f69c76219009d16350ade`. Repair commit:
+`2dcd6a2c541596277e9ab5543fdbfc5014bbe1bc`. Production was deployed as Static Web Apps
 deployment `24cbbb2d-1bfe-448a-a0a5-a898448b519c` to
 <https://edit-trail-finder.sociobot.in>.
 

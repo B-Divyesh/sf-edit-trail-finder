@@ -1,4 +1,31 @@
-# Edit Trail — repair 5 handoff
+# Edit Trail — verification 6 handoff
+
+## Status: PASS
+
+Independent QA accepted candidate `4987f141ebaa6e35be52c9374d0a12625cf9657a`
+at <https://edit-trail-finder.sociobot.in> on 30 August 2026. The live
+deployment matches all 30 served candidate files byte-for-byte. There are no
+critical, high, medium, or low defects.
+
+All 13 required claims passed before broader QA. `npm test`, TypeScript, Rust
+formatting, Clippy, the production build, package verification, clean package
+installation, live downloaded CLI, 10,000-sidecar benchmark, desktop/mobile,
+keyboard, reduced motion, axe, response-header, privacy-request, service
+worker update, and offline-reload checks passed. The scale run indexed 10,000
+sidecars in 178 ms and found 10,000 crop-and-denoise matches in 25 ms.
+
+Repeat with `npm ci && npm test`, `npx tsc --noEmit`, `cargo fmt --check`,
+`cargo clippy --all-targets -- -D warnings`, `npm run build`, and
+`cargo package --allow-dirty`. Complete evidence, exact URL/commit, and the
+empty severity list are in `.factory/verification-6.md`.
+
+No API, paid-unlock, or sign-in endpoint exists in this static product, so
+429/Retry-After allowance and Entra checks do not apply. Deployment and
+registry publication remain factory responsibilities.
+
+---
+
+# Edit Trail — repair 5 handoff (historical)
 
 ## Status: complete
 

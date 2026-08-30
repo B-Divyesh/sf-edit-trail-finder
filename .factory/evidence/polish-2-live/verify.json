@@ -1,0 +1,14 @@
+{
+  "url": "https://edit-trail-finder.sociobot.in",
+  "loadMs": 808,
+  "errors": [],
+  "a11y": {
+    "title": "Edit Trail — Find photos by what you did to them",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 2726
+  }
+}

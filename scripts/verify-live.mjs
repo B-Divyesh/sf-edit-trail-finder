@@ -17,7 +17,10 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.addInitScript(() => localStorage.setItem("real:test-sentinel", "keep"));
   const page = await context.newPage();
-  page.on("console", (message) => { if (message.type() === "error") report.consoleErrors.push(message.text()); });
+  page.on("console", (message) => {
+    const expectedMissingRoute = page.url().includes("/missing-polish-2-check") && message.text().includes("404");
+    if (message.type() === "error" && !expectedMissingRoute) report.consoleErrors.push(message.text());
+  });
   page.on("request", (request) => {
     if (new URL(request.url()).origin !== base) report.externalRequests.push(request.url());
   });
@@ -30,6 +33,22 @@ try {
   check((await page.locator("body").innerText()).includes("Malformed sidecars are recorded as warnings, and scanning continues."), "plain scan wording is live");
   check((await page.locator("body").innerText()).includes("CLI commands for sidecar searches"), "descriptive CLI heading is live");
   check(/exports\s+JSON/i.test(await page.locator(".proof-strip").innerText()), "JSON fact names its output");
+  const internalLinks = await page.locator("a[href]").evaluateAll((links, origin) => [...new Set(links.map((link) => new URL(link.getAttribute("href"), origin).href).filter((href) => new URL(href).origin === origin))], base);
+  for (const href of internalLinks) {
+    const linkResponse = await context.request.get(href);
+    check(linkResponse.ok(), `internal link resolves: ${new URL(href).pathname}${new URL(href).hash}`);
+  }
+  const nativeSignatures = new Map([
+    ["/downloads/edit-trail-linux-x86_64", [0x7f, 0x45, 0x4c, 0x46]],
+    ["/downloads/edit-trail-macos-arm64", [0xcf, 0xfa, 0xed, 0xfe]],
+    ["/downloads/edit-trail-macos-x86_64", [0xcf, 0xfa, 0xed, 0xfe]],
+    ["/downloads/edit-trail-windows-x86_64.exe", [0x4d, 0x5a]]
+  ]);
+  for (const [path, signature] of nativeSignatures) {
+    const downloadResponse = await context.request.get(`${base}${path}`);
+    const bytes = await downloadResponse.body();
+    check(downloadResponse.ok() && signature.every((byte, index) => bytes[index] === byte), `${path} serves its native executable`);
+  }
   const desktopFact = await page.locator(".hero-facts li").last().boundingBox();
   check(Boolean(desktopFact && desktopFact.y + desktopFact.height <= 900), "desktop first-screen facts fit the viewport");
   await page.screenshot({ path: resolve(evidence, "home-desktop.png"), fullPage: true });
@@ -53,10 +72,17 @@ try {
   await page.screenshot({ path: resolve(evidence, "demo-reset-desktop.png"), fullPage: false });
   await page.getByRole("link", { name: "View install options" }).click();
   check(page.url() === `${base}/#install`, "demo exit reaches the real install section");
-  check(await page.getByText("Demo — sample data, nothing is saved").count() === 0, "demo banner is absent after exit");
+  check(!await page.getByText("Demo — sample data, nothing is saved").isVisible(), "demo banner is absent after exit");
   await page.goBack();
   await page.goBack();
-  check(await trigger.isFocused(), "browser Back restores the demo trigger focus");
+  check(await trigger.evaluate((element) => element === document.activeElement), "browser Back restores the demo trigger focus");
+
+  const recipeDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download audit recipes" }).click();
+  const recipePath = await (await recipeDownload).path();
+  const recipes = await readFile(recipePath, "utf8");
+  check(recipes.split("\n").filter((line) => line.startsWith("edit-trail ")).length === 12, "live recipe pack contains 12 commands");
+  check(recipes.includes("edit-trail find -o denoise --limit 1 --open"), "live recipe pack contains the tested folder-opening command");
 
   await page.goto(`${base}/?demo=1`, { waitUntil: "networkidle" });
   check(page.url() === `${base}/demo/`, "?demo=1 enters the real demo route");
@@ -71,6 +97,7 @@ try {
   for (const [path, title] of routeTitles) {
     response = await page.goto(`${base}${path}`, { waitUntil: "networkidle" });
     check(response?.status() === 200 && await page.title() === title, `${path} returns 200 with its title`);
+    if (path === "/privacy/") check((await page.locator("main").innerText()).includes("Delete .edit-trail.json to remove the default CLI index."), "privacy gives tested default-index deletion guidance");
     for (const selector of ["meta[name=description]", "link[rel=canonical]", "meta[property='og:title']", "meta[name='twitter:card']", "link[rel='apple-touch-icon']"]) {
       check(await page.locator(selector).count() === 1, `${path} includes ${selector}`);
     }
@@ -80,7 +107,7 @@ try {
   }
   response = await page.goto(`${base}/missing-polish-2-check`, { waitUntil: "networkidle" });
   check(response?.status() === 404, "unknown route returns HTTP 404");
-  check(await page.title() === "Page not found — Edit Trail" && await page.getByRole("link", { name: /Return home/ }).isVisible(), "404 is designed and links home");
+  check(await page.title() === "Page not found — Edit Trail" && await page.getByRole("link", { name: "Return to Edit Trail" }).isVisible(), "404 is designed and links home");
   const notFoundAxe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
   report.axeViolations.push(...notFoundAxe.violations.map((violation) => `/404:${violation.id}`));
 

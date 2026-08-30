@@ -1,4 +1,4 @@
-const CACHE = "edit-trail-v4";
+const CACHE = "edit-trail-v5";
 const CORE = __EDIT_TRAIL_PRECACHE__;
 
 self.addEventListener("install", (event) => {
@@ -36,7 +36,11 @@ self.addEventListener("fetch", (event) => {
       if (response.ok) (await caches.open(CACHE)).put(event.request, response.clone());
       return response;
     } catch {
-      if (event.request.mode === "navigate") return (await caches.match("/"));
+      if (event.request.mode === "navigate") {
+        const pathname = new URL(event.request.url).pathname;
+        const route = pathname.endsWith("/") || pathname.includes(".") ? pathname : `${pathname}/`;
+        return (await caches.match(route)) ?? (await caches.match("/404.html")) ?? (await caches.match("/"));
+      }
       throw new Error("Offline resource unavailable");
     }
   })());

@@ -1,3 +1,5 @@
+import DXO_SAMPLE from "../../examples/sample-archive/lantern-0917.ARW.dop?raw";
+
 export type DemoRecord = {
   name: string;
   editor: string;
@@ -6,12 +8,17 @@ export type DemoRecord = {
 
 const aliases: Record<string, string> = {
   denoiseprofile: "denoise",
+  noise: "denoise",
   "noise reduction": "denoise",
+  "noise removal": "denoise",
   "raw denoise": "denoise",
   "rotate and perspective": "perspective",
+  keystoning: "perspective",
   "local adjustments": "masking",
   "mask manager": "masking",
-  lensfun: "lens correction"
+  lensfun: "lens correction",
+  vignetting: "vignette",
+  "artistic vignetting": "vignette"
 };
 
 export const SAMPLE = `--- FILE: night-market-1842.NEF.xmp
@@ -27,11 +34,7 @@ export const SAMPLE = `--- FILE: night-market-1842.NEF.xmp
   </rdf:Description>
 </x:xmpmeta>
 --- FILE: lantern-0917.ARW.dop
-<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="rdf" xmlns:crs="camera-raw">
-  <rdf:Description crs:HasCrop="True" crs:LuminanceSmoothing="28" crs:Exposure2012="0.45">
-    <crs:MaskGroupBasedCorrections />
-  </rdf:Description>
-</x:xmpmeta>
+${DXO_SAMPLE.trim()}
 --- FILE: after-rain-2201.RAF.pp3
 [Version]
 AppVersion=5.11
@@ -256,10 +259,75 @@ export function isWellFormedXml(input: string): boolean {
   return parseXmlElements(input) !== undefined;
 }
 
+function validateDopStructure(input: string): boolean {
+  if (!input.trimStart().startsWith("Sidecar")) return false;
+  let depth = 0;
+  let sawTable = false;
+  let quote = "";
+  let escaped = false;
+  let lineComment = false;
+  for (let index = 0; index < input.length; index += 1) {
+    const character = input[index];
+    if (lineComment) {
+      if (character === "\n") lineComment = false;
+      continue;
+    }
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === quote) quote = "";
+      continue;
+    }
+    if (character === "-" && input[index + 1] === "-") {
+      lineComment = true;
+      index += 1;
+    } else if (character === '"' || character === "'") {
+      quote = character;
+    } else if (character === "{") {
+      sawTable = true;
+      depth += 1;
+    } else if (character === "}") {
+      depth -= 1;
+      if (depth < 0) return false;
+    }
+  }
+  return sawTable && depth === 0 && quote === "";
+}
+
+function splitCamelCase(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2");
+}
+
+function parseDop(name: string, content: string): DemoRecord {
+  if (!validateDopStructure(content)) {
+    throw new Error(`Could not parse ${name}. Check that its DOP data is complete.`);
+  }
+  const software = /^\s*Software\s*=\s*"([^"]+)"\s*,?\s*$/m.exec(content)?.[1];
+  if (!software?.startsWith("DxO PhotoLab")) {
+    throw new Error(`Could not parse ${name}. This DOP does not identify DxO PhotoLab.`);
+  }
+  const correctionStates = new Map<string, boolean>();
+  for (const line of content.split(/\r?\n/)) {
+    const assignment = /^\s*([A-Za-z][A-Za-z0-9_]*)Active\s*=\s*(true|false)\s*,?\s*(?:--.*)?$/.exec(line);
+    if (assignment) correctionStates.set(assignment[1], assignment[2] === "true");
+  }
+  if (!correctionStates.size) {
+    throw new Error(`Could not parse ${name}. No DxO correction states were found.`);
+  }
+  const activeOperations = new Set<string>();
+  for (const [correction, active] of correctionStates) {
+    if (active) activeOperations.add(normalizeOperation(splitCamelCase(correction)));
+  }
+  return { name, editor: "DxO PhotoLab", operations: [...activeOperations].sort() };
+}
+
 export function parseSidecars(input: string): DemoRecord[] {
   if (!input.trim()) return [];
   return splitDocuments(input).map(({ name, xml }) => {
     if (/\.pp3$/i.test(name)) return parsePp3(name, xml);
+    if (/\.dop$/i.test(name) && !xml.trimStart().startsWith("<")) return parseDop(name, xml);
     const elements = parseXmlElements(xml);
     if (!elements) throw new Error(`Could not parse ${name}. Check that its XML is complete.`);
     const operations = new Set<string>();

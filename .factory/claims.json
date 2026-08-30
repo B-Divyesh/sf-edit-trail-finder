@@ -43,24 +43,31 @@
   },
   {
     "id": "browser-sidecar-formats",
-    "claim": "The browser demo accepts XMP, DOP, and PP3 sidecars.",
+    "claim": "The browser demo accepts XMP, representative DxO PhotoLab DOP, and PP3 sidecars.",
     "where": "browser demo file picker",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:browser-sidecar-formats",
-    "sandbox": "fresh demo route; upload one in-memory XMP, DOP, and PP3 file; assert all three parse and render"
+    "sandbox": "fresh demo route; upload XMP and PP3 inputs plus the bundled DxO PhotoLab DOP fixture; assert all three parse and render"
   },
   {
     "id": "offline-reload",
     "claim": "The site and demo work offline after the first visit.",
     "where": "landing page first-screen facts and privacy page",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:offline-reload",
-    "sandbox": "dedicated fresh browser context; wait for service worker; set context offline; reload and run demo"
+    "sandbox": "dedicated fresh browser context; wait for service worker; go offline; open and reload demo, privacy, and terms; assert each route's own content"
   },
   {
     "id": "local-sidecar-search",
-    "claim": "The CLI indexes XMP, DOP, and PP3 sidecars, normalises aliases and history boundaries, records malformed files, and does not read image pixels.",
+    "claim": "The CLI indexes XMP, representative DxO PhotoLab DOP, and PP3 sidecars, normalises aliases and history boundaries, records malformed files, and does not read image pixels.",
     "where": "landing page facts, how-it-works section, and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:local-sidecar-search",
-    "sandbox": "temporary archive with three sidecar families, malformed XML, and a RAW marker; assert warnings, combination matches, and marker absence"
+    "sandbox": "temporary archive with XMP and PP3 data, the bundled DxO PhotoLab DOP fixture, malformed XML, and a RAW marker; assert active/inactive corrections, warnings, matches, and marker absence"
+  },
+  {
+    "id": "cli-private-read-only",
+    "claim": "The CLI does not modify source sidecars or make network requests while indexing, searching, and reporting.",
+    "where": "privacy page, terms page, CLI help, and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:cli-private-read-only",
+    "sandbox": "temporary copy of all bundled sidecar families; deny and log connect, DNS, and send calls with LD_PRELOAD; compare source bytes, modes, and modification times before and after index, find, and report"
   },
   {
     "id": "cli-outputs",

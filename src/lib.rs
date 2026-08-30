@@ -178,6 +178,8 @@ pub fn parse_sidecar(path: &Path) -> io::Result<SidecarRecord> {
         .unwrap_or_default();
     let (editor, operations, warnings) = if ext.eq_ignore_ascii_case("pp3") {
         parse_pp3(&content)
+    } else if ext.eq_ignore_ascii_case("dop") && !content.trim_start().starts_with('<') {
+        parse_dop(&content).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?
     } else {
         parse_xml(&content).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?
     };
@@ -334,6 +336,137 @@ fn infer_adobe_operations(
     }
 }
 
+/// Parse DxO PhotoLab's Lua-table DOP sidecar format. PhotoLab writes a
+/// `Sidecar = { ... }` document whose correction switches use names such as
+/// `CropActive` and `NoiseActive`. Later assignments (including Overrides)
+/// replace the same correction's base value.
+fn parse_dop(content: &str) -> Result<(String, Vec<Operation>, Vec<String>), String> {
+    validate_dop_structure(content)?;
+    let mut software_is_photolab = false;
+    let mut correction_states: BTreeMap<String, bool> = BTreeMap::new();
+
+    for source_line in content.lines() {
+        let line = source_line.split("--").next().unwrap_or_default().trim();
+        let Some((raw_key, raw_value)) = line.split_once('=') else {
+            continue;
+        };
+        let key = raw_key.trim();
+        if key.is_empty()
+            || !key
+                .chars()
+                .all(|character| character.is_ascii_alphanumeric() || character == '_')
+        {
+            continue;
+        }
+        let value = raw_value.trim().trim_end_matches(',').trim();
+        if key == "Software" {
+            let software = value.trim_matches('"');
+            software_is_photolab = software.starts_with("DxO PhotoLab");
+        }
+        let Some(stem) = key.strip_suffix("Active") else {
+            continue;
+        };
+        let active = match value {
+            "true" => true,
+            "false" => false,
+            _ => continue,
+        };
+        correction_states.insert(stem.to_string(), active);
+    }
+
+    if !software_is_photolab {
+        return Err("DOP sidecar does not identify DxO PhotoLab".into());
+    }
+    if correction_states.is_empty() {
+        return Err("DOP sidecar has no correction activity fields".into());
+    }
+
+    let mut consolidated: BTreeMap<String, bool> = BTreeMap::new();
+    for (key, active) in correction_states {
+        let name = normalize_operation(&split_camel_case(&key));
+        if name.is_empty() {
+            continue;
+        }
+        consolidated
+            .entry(name)
+            .and_modify(|existing| *existing |= active)
+            .or_insert(active);
+    }
+    Ok((
+        "DxO PhotoLab".into(),
+        consolidated
+            .into_iter()
+            .map(|(name, active)| Operation { name, active })
+            .collect(),
+        Vec::new(),
+    ))
+}
+
+fn validate_dop_structure(content: &str) -> Result<(), String> {
+    if !content.trim_start().starts_with("Sidecar") {
+        return Err("DOP sidecar must start with a Sidecar table".into());
+    }
+    let mut depth = 0_u32;
+    let mut saw_table = false;
+    let mut quote = None;
+    let mut escaped = false;
+    let mut line_comment = false;
+    let mut characters = content.chars().peekable();
+    while let Some(character) = characters.next() {
+        if line_comment {
+            if character == '\n' {
+                line_comment = false;
+            }
+            continue;
+        }
+        if let Some(delimiter) = quote {
+            if escaped {
+                escaped = false;
+            } else if character == '\\' {
+                escaped = true;
+            } else if character == delimiter {
+                quote = None;
+            }
+            continue;
+        }
+        if character == '-' && characters.peek() == Some(&'-') {
+            characters.next();
+            line_comment = true;
+        } else if character == '"' || character == '\'' {
+            quote = Some(character);
+        } else if character == '{' {
+            saw_table = true;
+            depth += 1;
+        } else if character == '}' {
+            depth = depth
+                .checked_sub(1)
+                .ok_or_else(|| "DOP sidecar has an unmatched closing brace".to_string())?;
+        }
+    }
+    if quote.is_some() || depth != 0 || !saw_table {
+        return Err("DOP sidecar contains an incomplete table".into());
+    }
+    Ok(())
+}
+
+fn split_camel_case(value: &str) -> String {
+    let characters: Vec<char> = value.chars().collect();
+    let mut words = String::new();
+    for (index, character) in characters.iter().enumerate() {
+        let preceding_is_lower = index > 0 && characters[index - 1].is_ascii_lowercase();
+        let acronym_boundary = index > 0
+            && characters[index - 1].is_ascii_uppercase()
+            && characters
+                .get(index + 1)
+                .is_some_and(|next| next.is_ascii_lowercase());
+        if character.is_ascii_uppercase() && (preceding_is_lower || acronym_boundary) {
+            words.push(' ');
+        }
+        words.push(*character);
+    }
+    words
+}
+
 fn parse_pp3(content: &str) -> (String, Vec<Operation>, Vec<String>) {
     let mut section = String::new();
     let mut operations = BTreeMap::new();
@@ -403,13 +536,16 @@ pub fn normalize_operation(value: &str) -> String {
         | "impulse denoise"
         | "color noise reduction"
         | "directional pyramid denoising"
-        | "deepprime" => "denoise".into(),
+        | "deepprime"
+        | "noise"
+        | "noise removal" => "denoise".into(),
         "contrast brightness saturation" => "contrast".into(),
-        "rotate and perspective" | "perspective correction" => "perspective".into(),
+        "rotate and perspective" | "perspective correction" | "keystoning" => "perspective".into(),
         "graduated filter" | "local adjustments" | "mask manager" | "masks manager" => {
             "masking".into()
         }
         "lens correction" | "lensfun" => "lens correction".into(),
+        "vignetting" | "artistic vignetting" => "vignette".into(),
         "color balance rgb" | "colorbalance rgb" => "color balance rgb".into(),
         _ => clean,
     }
@@ -512,6 +648,32 @@ mod tests {
             operations
                 .iter()
                 .any(|op| op.name == "denoise" && op.active)
+        );
+    }
+
+    #[test]
+    fn parses_representative_dxo_dop_corrections_and_inactive_states() {
+        let (editor, operations, warnings) = parse_dop(include_str!(
+            "../examples/sample-archive/lantern-0917.ARW.dop"
+        ))
+        .unwrap();
+        assert_eq!(editor, "DxO PhotoLab");
+        assert!(warnings.is_empty());
+        assert!(operations.iter().any(|op| op.name == "crop" && op.active));
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "denoise" && op.active)
+        );
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "exposure" && !op.active)
+        );
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "masking" && !op.active)
         );
     }
 }

@@ -1,0 +1,32 @@
+Sidecar = {
+	Date = "2026-08-27T21:14:00Z",
+	Software = "DxO PhotoLab 8.7.2 42",
+	Source = {
+		Items = {
+			{
+				Name = "lantern-0917.ARW",
+				Settings = {
+					AppliedPresetDisplayName = "DxO Standard",
+					Base = {
+						CropActive = false,
+						ExposureActive = false,
+						LocalAdjustmentsActive = false,
+						NoiseActive = false,
+					},
+					Overrides = {
+						CropActive = true,
+						ExposureActive = false,
+						LocalAdjustmentsActive = false,
+						NoiseActive = true,
+						NoiseRemovalMethod = "deepprime",
+					},
+					Version = "20.0",
+				},
+				ShouldProcess = 2,
+				Uuid = "7B474B4D-3505-438F-885A-7613C435F3BC",
+			},
+		},
+		Uuid = "029C2F22-F9AB-43B2-8A10-A2B05FD54291",
+	},
+	Version = "20.0",
+}

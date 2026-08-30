@@ -11,8 +11,9 @@ The demo uses browser memory and does not upload selected sidecars.
 
 ## Install
 
-Download the Linux executable from the product site. On macOS or Windows,
-build from source with a current Rust toolchain:
+Download the native executable for Linux x64, macOS arm64, macOS x64, or
+Windows x64 from the product site. You can also build from source with a
+current Rust toolchain:
 
 ```sh
 cargo install --path .

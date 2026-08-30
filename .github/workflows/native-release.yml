@@ -15,20 +15,24 @@ jobs:
         include:
           - label: Linux x64
             os: ubuntu-latest
+            artifact: edit-trail-linux-x86_64
             binary: target/release/edit-trail
             build: cargo build --release
           - label: macOS arm64
             os: macos-14
+            artifact: edit-trail-macos-arm64
             target: aarch64-apple-darwin
             binary: target/aarch64-apple-darwin/release/edit-trail
             build: cargo build --release --target aarch64-apple-darwin
           - label: macOS x64
             os: macos-13
+            artifact: edit-trail-macos-x86_64
             target: x86_64-apple-darwin
             binary: target/x86_64-apple-darwin/release/edit-trail
             build: cargo build --release --target x86_64-apple-darwin
           - label: Windows x64
             os: windows-latest
+            artifact: edit-trail-windows-x86_64
             target: x86_64-pc-windows-msvc
             binary: target/x86_64-pc-windows-msvc/release/edit-trail.exe
             build: cargo build --release --target x86_64-pc-windows-msvc
@@ -41,3 +45,9 @@ jobs:
       - name: Run CLI help
         shell: bash
         run: ${{ matrix.binary }} --help
+      - name: Upload native executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.binary }}
+          if-no-files-found: error

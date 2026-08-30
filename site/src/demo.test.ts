@@ -30,8 +30,19 @@ describe("sidecar demo vocabulary", () => {
     expect(globalThis.DOMParser).toBeUndefined();
     expect(parseSidecars(SAMPLE)).toEqual([
       { name: "night-market-1842.NEF.xmp", editor: "darktable", operations: ["crop", "denoise", "exposure", "masking"] },
-      { name: "lantern-0917.ARW.dop", editor: "Adobe Camera Raw / Lightroom", operations: ["crop", "denoise", "exposure", "masking"] },
+      { name: "lantern-0917.ARW.dop", editor: "DxO PhotoLab", operations: ["crop", "denoise"] },
       { name: "after-rain-2201.RAF.pp3", editor: "RawTherapee", operations: ["color balance rgb", "crop"] }
     ]);
+  });
+
+  it("reads active and inactive corrections from a representative DxO DOP table", () => {
+    const dxo = parseSidecars(SAMPLE).find((record) => record.name.endsWith(".dop"));
+    expect(dxo).toEqual({
+      name: "lantern-0917.ARW.dop",
+      editor: "DxO PhotoLab",
+      operations: ["crop", "denoise"]
+    });
+    expect(dxo?.operations).not.toContain("exposure");
+    expect(dxo?.operations).not.toContain("masking");
   });
 });

@@ -6,6 +6,12 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- Cache the canonical demo, privacy, and terms routes so each page reopens
+  with its own content while offline.
+- Parse DxO PhotoLab's DOP table format and preserve active and inactive
+  correction states in the CLI index.
+- Verify that CLI indexing, searching, and reporting make no network calls
+  and leave source sidecars unchanged.
 - Make the work-order `build:site` command compile, copy, and verify the Linux
   executable before deployment.
 - Prevent missing extensionless downloads from falling through to landing-page
@@ -16,6 +22,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- Add a representative DxO PhotoLab DOP file to the browser and CLI demos.
 - Add an isolated `edit-trail demo` command with bundled sample sidecars.
 - Add executable-content, mobile sizing, privacy, offline, and claim
   regressions.

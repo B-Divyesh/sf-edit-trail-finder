@@ -43,4 +43,12 @@ if (config.responseOverrides?.["404"]?.rewrite !== "/404.html") {
 if (worker.includes("staticwebapp.config.json")) {
   throw new Error("The Azure deployment manifest must not be precached by the service worker");
 }
+for (const route of ["/demo/", "/privacy/", "/terms/"]) {
+  if (!worker.includes(JSON.stringify(route))) {
+    throw new Error(`The service worker must precache the canonical route ${route}`);
+  }
+}
+if (/"\/[^"]*\/\/"/.test(worker)) {
+  throw new Error("The service worker contains a non-canonical double-slash precache route");
+}
 console.log("Verified production response policy in dist/site/staticwebapp.config.json");

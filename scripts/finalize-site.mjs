@@ -13,7 +13,7 @@ async function files(directory) {
 const urls = (await files(root))
   .map((path) => relative(root, path).split(sep).join("/"))
   .filter((path) => path !== "sw.js" && path !== "_headers" && path !== "staticwebapp.config.json" && !path.startsWith("downloads/"))
-  .map((path) => path === "index.html" ? "/" : path.endsWith("/index.html") ? `/${path.slice(0, -10)}/` : `/${path}`)
+  .map((path) => path === "index.html" ? "/" : path.endsWith("/index.html") ? `/${path.slice(0, -"/index.html".length)}/` : `/${path}`)
   .sort();
 const workerPath = resolve(root, "sw.js");
 const worker = await readFile(workerPath, "utf8");

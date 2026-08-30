@@ -32,8 +32,8 @@ filename.pp3.” (4).
 | 10 | It normalises active editing steps, then searches combinations such as denoise plus crop. |
 | 8 | It never reads or uploads image pixels. |
 | 12 | The demo uses browser memory and does not upload selected sidecars. |
-| 10 | Download the Linux executable from the product site. |
-| 12 | On macOS or Windows, build from source with a current Rust toolchain. |
+| 18 | Download the native executable for Linux x64, macOS arm64, macOS x64, or Windows x64 from the product site. |
+| 11 | You can also build from source with a current Rust toolchain. |
 | 13 | It creates a temporary three-sidecar archive, index, and offline report. |
 | 11 | Exit codes are 0 for success, 1 for I/O or parse failures, and 2 for invalid usage. |
 | 10 | A find query with no matches returns 3. |

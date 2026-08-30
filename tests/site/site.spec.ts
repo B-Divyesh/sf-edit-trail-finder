@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -231,13 +231,14 @@ test("@claim:browser-sidecar-formats browser demo accepts XMP, DOP, and PP3 side
   await page.goto("/demo/");
   await page.locator("#sidecar-files").setInputFiles([
     { name: "xmp.NEF.xmp", mimeType: "text/xml", buffer: Buffer.from('<sidecar><module operation="crop" enabled="true" /></sidecar>') },
-    { name: "dxo.dop", mimeType: "text/xml", buffer: Buffer.from('<sidecar><module operation="denoise" enabled="true" /></sidecar>') },
+    { name: "dxo.dop", mimeType: "text/plain", buffer: readFileSync(resolve("examples/sample-archive/lantern-0917.ARW.dop")) },
     { name: "rawtherapee.pp3", mimeType: "text/plain", buffer: Buffer.from("[Crop]\nEnabled=true\n") }
   ]);
   await page.getByLabel("Any selected").check();
   await page.getByRole("button", { name: /Find matching files/ }).click();
   await expect(page.locator("[data-demo-status]")).toContainText("3 of 3 sidecars");
   await expect(page.locator("[data-demo-results] article")).toHaveCount(3);
+  await expect(page.locator("[data-demo-results]")).toContainText("DxO PhotoLab");
 });
 
 test("@claim:mit-license ships the MIT license and identifies it in the first-screen facts", async ({ page }) => {
@@ -247,7 +248,7 @@ test("@claim:mit-license ships the MIT license and identifies it in the first-sc
   await expect(page.locator(".hero-facts")).toContainText("MIT licensed");
 });
 
-test("@claim:offline-reload installed shell reloads with an explicit offline state", async ({ browser }) => {
+test("@claim:offline-reload demo and legal routes reopen with their own content while offline", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
@@ -264,15 +265,36 @@ test("@claim:offline-reload installed shell reloads with an explicit offline sta
       return { waiting: Boolean(registration.waiting), caches: await caches.keys() };
     });
     expect(workerState.waiting).toBe(false);
-    expect(workerState.caches).toContain("edit-trail-v4");
+    expect(workerState.caches).toContain("edit-trail-v5");
+    const cachedPaths = await page.evaluate(async () => {
+      const cache = await caches.open("edit-trail-v5");
+      return (await cache.keys()).map((request) => new URL(request.url).pathname);
+    });
+    expect(cachedPaths).toEqual(expect.arrayContaining(["/", "/demo/", "/privacy/", "/terms/"]));
+    expect(cachedPaths.some((path) => path.includes("//"))).toBe(false);
     await context.setOffline(true);
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Find RAW photos by editing steps");
-    await page.waitForFunction(() => document.querySelector("[data-operation-options]")?.childElementCount);
-    await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-    await expect(page.locator("[data-offline]")).toBeVisible();
-    await page.getByRole("button", { name: /Find matching files/ }).click();
+    await page.getByRole("link", { name: "Try it with sample data" }).click();
+    await expect(page).toHaveURL(/\/demo\/$/);
+    await expect(page).toHaveTitle("Demo — Edit Trail");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Search sample editing steps");
+    await expect(page.getByText("Demo — sample data, nothing is saved")).toBeVisible();
     await expect(page.locator("[data-demo-status]")).toContainText("2 of 3 sidecars");
+    await expect(page.locator("[data-offline]")).toBeVisible();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page).toHaveTitle("Demo — Edit Trail");
+    await expect(page.locator("[data-demo-status]")).toContainText("2 of 3 sidecars");
+
+    for (const [path, title, heading] of [
+      ["/privacy/", "Privacy — Edit Trail", "Privacy"],
+      ["/terms/", "Terms — Edit Trail", "Terms"]
+    ]) {
+      await page.goto(path, { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveTitle(title);
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+      await expect(page.locator("[data-offline]")).toBeVisible();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page).toHaveTitle(title);
+    }
   } finally {
     await context.setOffline(false);
     await context.close();
@@ -285,7 +307,7 @@ test("@claim:local-sidecar-search CLI indexes supported sidecars without reading
   try {
     writeFileSync(join(work, "darktable.NEF.xmp"), '<sidecar history_end="2"><module num="0" operation="crop" enabled="true"/><module num="1" operation="denoiseprofile" enabled="true"/><module num="2" operation="contrast" enabled="true"/></sidecar>');
     writeFileSync(join(work, "rawtherapee.pp3"), "[Crop]\nEnabled=true\n[Directional Pyramid Denoising]\nEnabled=1\n");
-    writeFileSync(join(work, "dxo.dop"), '<sidecar><module operation="masking" enabled="true"/></sidecar>');
+    writeFileSync(join(work, "dxo.dop"), readFileSync(resolve("examples/sample-archive/lantern-0917.ARW.dop")));
     writeFileSync(join(work, "broken.xmp"), "<not-closed");
     writeFileSync(join(work, "private.RAW"), "PRIVATE_PIXEL_MARKER");
     const binary = resolve("target/release/edit-trail");
@@ -302,9 +324,62 @@ test("@claim:local-sidecar-search CLI indexes supported sidecars without reading
       { name: "denoise", active: true }
     ]));
     expect(darktable.operations).not.toEqual(expect.arrayContaining([{ name: "contrast", active: true }]));
+    const dxo = parsedIndex.records.find((record: { sidecar: string }) => record.sidecar.endsWith("dxo.dop"));
+    expect(dxo.editor).toBe("DxO PhotoLab");
+    expect(dxo.operations).toEqual(expect.arrayContaining([
+      { name: "crop", active: true },
+      { name: "denoise", active: true },
+      { name: "exposure", active: false },
+      { name: "masking", active: false }
+    ]));
     const matches = JSON.parse(execFileSync(binary, ["find", "-o", "denoise", "-o", "crop", "--match", "all", "--index", index, "--json"], { encoding: "utf8" }));
-    expect(matches).toHaveLength(2);
+    expect(matches).toHaveLength(3);
     expect(statSync(binary).size).toBeGreaterThan(100_000);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("@claim:cli-private-read-only CLI makes no network call and leaves source sidecars unchanged", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "One Linux CLI sandbox run is sufficient");
+  const work = mkdtempSync(join(tmpdir(), "edit-trail-private-"));
+  const archive = join(work, "archive");
+  try {
+    cpSync(resolve("examples/sample-archive"), archive, { recursive: true });
+    const sidecars = [
+      "night-market-1842.NEF.xmp",
+      "lantern-0917.ARW.dop",
+      "after-rain-2201.RAF.pp3"
+    ];
+    const snapshot = new Map(sidecars.map((name) => {
+      const path = join(archive, name);
+      const metadata = statSync(path);
+      return [name, { bytes: readFileSync(path), mode: metadata.mode, mtimeMs: metadata.mtimeMs }];
+    }));
+    const interceptor = join(work, "network-deny.so");
+    execFileSync("cc", ["-shared", "-fPIC", "-o", interceptor, resolve("tests/network-deny.c")]);
+    const networkLog = join(work, "network-attempts.log");
+    const environment = { ...process.env, LD_PRELOAD: interceptor, EDIT_TRAIL_NETWORK_LOG: networkLog };
+    const binary = resolve("target/release/edit-trail");
+    const index = join(work, "trail.json");
+    const report = join(work, "report.html");
+    for (const args of [
+      ["index", archive, "--output", index, "--json"],
+      ["find", "-o", "crop", "--index", index, "--json"],
+      ["report", "--index", index, "--output", report]
+    ]) {
+      const result = spawnSync(binary, args, { encoding: "utf8", env: environment });
+      expect(result.status, result.stderr).toBe(0);
+    }
+    expect(existsSync(networkLog) ? readFileSync(networkLog, "utf8") : "").toBe("");
+    for (const name of sidecars) {
+      const before = snapshot.get(name)!;
+      const path = join(archive, name);
+      const after = statSync(path);
+      expect(readFileSync(path)).toEqual(before.bytes);
+      expect(after.mode).toBe(before.mode);
+      expect(after.mtimeMs).toBe(before.mtimeMs);
+    }
   } finally {
     rmSync(work, { recursive: true, force: true });
   }

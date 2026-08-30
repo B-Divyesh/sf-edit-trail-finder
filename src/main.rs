@@ -207,8 +207,8 @@ fn demo_command(args: DemoArgs) -> Result<u8, String> {
     )
     .map_err(|error| format!("could not write demo sidecar: {error}"))?;
     fs::write(
-        archive.join("lantern-0917.ARW.xmp"),
-        include_str!("../examples/sample-archive/lantern-0917.ARW.xmp"),
+        archive.join("lantern-0917.ARW.dop"),
+        include_str!("../examples/sample-archive/lantern-0917.ARW.dop"),
     )
     .map_err(|error| format!("could not write demo sidecar: {error}"))?;
     fs::write(

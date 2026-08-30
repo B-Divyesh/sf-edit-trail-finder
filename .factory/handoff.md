@@ -1,4 +1,37 @@
-# Edit Trail v0.1.0 — repair handoff
+# Edit Trail v0.1.0 — independent verification handoff
+
+## Status: PASS
+
+Independent verifier result for candidate
+`860bf180610a38b95052b58d519625609c09749e` at
+<https://edit-trail-finder.sociobot.in/>: **PASS** on 30 August 2026 UTC.
+
+The deployed root, JavaScript, CSS, service worker, legal pages, responsive
+hero asset, and Linux download match the locally built candidate byte for byte.
+All eight required claims passed; full local tests/build/type/lint/package
+checks passed; a clean packaged CLI consumer worked; desktop/mobile, keyboard,
+reduced-motion, offline reload, axe, privacy request logs, headers, and the
+10,000-sidecar scale target passed. There are no known defects or remaining
+release blockers. Full exact evidence is in `.factory/verification-4.md`.
+
+To reproduce:
+
+```sh
+npm ci
+npm test
+npm run build
+npx tsc --noEmit
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo package --allow-dirty
+```
+
+Run the CLI demo with `target/release/edit-trail demo --json`, or use the live
+browser demo at <https://edit-trail-finder.sociobot.in/?demo=1#demo>.
+
+---
+
+# Previous repair handoff
 
 ## Status: repaired and deployed
 

@@ -1,63 +1,48 @@
-# Edit Trail — polish round 1 handoff
+# Edit Trail — independent verification 5 handoff
 
-## Status: complete
+## Status: FAIL
 
-Repaired the full adversarial review against base
-`63d20458787e0b11760f69c76219009d16350ade`. Repair commit:
-`2dcd6a2c541596277e9ab5543fdbfc5014bbe1bc`. Production was deployed as Static Web Apps
-deployment `24cbbb2d-1bfe-448a-a0a5-a898448b519c` to
-<https://edit-trail-finder.sociobot.in>.
+Candidate `dcae26b9dca70db6d2c6fb3a976967484130cb25` was verified against
+<https://edit-trail-finder.sociobot.in/> on 30 August 2026 UTC. The live files
+match the candidate, but the release is blocked by a false offline claim.
 
-## What changed
+After a first visit and service-worker activation, offline navigation or
+reload of `/demo/`, `/privacy/`, and `/terms/` serves the home document. The
+generated worker caches `/demo//`, `/privacy//`, and `/terms//`; the real
+single-slash routes miss and fall back to `/`. The `offline-reload` claim test
+passes only because it reloads `/` and runs the home-page demo rather than the
+documented `/demo/` sandbox.
 
-- A one-click, isolated `/demo/` route now has sample XMP, DOP, and PP3 data,
-  an always-visible demo banner, automatic crop-and-denoise results, reset,
-  and a real exit to install options. `?demo=1` redirects there.
-- Added browser PP3 parsing, history focus restoration, complete routing,
-  response CSP framing protection, metadata, social card, touch icon,
-  sitemap, 404 shell, and consistent navigation/footer.
-- Rewrote all flagged first-screen, README, heading, control, and terminology
-  copy. The audit is in `.factory/copy-audit.md`.
-- Added claims and observable tests for MIT licensing, browser formats,
-  no third-party runtime requests, and native platform downloads. Removed
-  every untestable quantitative or unsupported promise.
-- Shipped macOS arm64/x64 and Windows x64 native binaries alongside Linux,
-  with a native GitHub Actions verification matrix.
-- Kept the sidecar-night-market identity. The share and touch assets are
-  documented deterministic derivatives of its original artwork.
+Two further claims-contract gaps remain: CLI no-network/no-mutation promises
+are not registered or tested, and DOP support is exercised only with synthetic
+generic XML or Adobe XMP renamed `.dop`, not a representative DxO sidecar.
 
-## Verification
+## What passed
 
-- Clean clone: `npm ci`, then `npm test` passed (4 Rust unit, 3 Rust CLI,
-  1 doctest, 7 Vitest, 41 Playwright passes; 3 intentional duplicate CLI
-  mobile skips).
-- Each command in `.factory/claims.json` was run independently in that clean
-  clone. All 12 claims passed.
-- Local package check: `cargo package --allow-dirty` created
-  `target/package/edit-trail-0.1.0.crate`.
-- Production cold check: `/opt/fleet/lib/verify-url.sh` passed with 679 ms
-  load, no console errors, title/lang/main/alt/button checks all clean.
-- Production axe via Playwright returned zero violations on `/`, `/demo/`,
-  `/privacy/`, `/terms/`, and the designed 404. The standalone axe CLI could
-  not locate its Selenium Chrome binary, so the installed Playwright axe
-  integration was used instead.
-- Live mobile cold run confirmed `/demo/`, banner, both result records, no
-  external request, no console error, and third fact at 785.4 px in an 844 px
-  viewport. CSP live response includes `frame-ancestors 'none'`; missing route
-  returns 404.
+- All 12 declared claim commands returned zero (21 passes, 3 intentional
+  mobile CLI duplicates skipped), but the offline test does not prove its
+  registered claim.
+- `npm ci`, `npm test`, `npm run build`, TypeScript, rustfmt, clippy, and
+  `cargo package --allow-dirty` passed.
+- Clean crate install and both packaged/live Linux CLI flows passed.
+- 10,000 sidecars indexed in 240.43 ms; a full matching query took 40.01 ms.
+- Candidate/live hashes match across routes, assets, worker, and all four
+  downloads.
+- Live privacy request logging stayed same-origin; selected files caused no
+  request or persistent browser storage.
+- Axe found no violations on all routes. Mobile Lighthouse scored 96/100/100/100
+  with LCP 1.4 s, CLS 0.033, and 124 KiB transferred.
+- Desktop, 390 px mobile, keyboard, focus, reduced motion, 200% text, headers,
+  caching, links, error states, exit codes, and folder-opening limits passed.
 
-Evidence: `/tmp/edit-trail-live-evidence/live-check.json`,
-`/tmp/edit-trail-live-evidence/live-axe.json`,
-`/tmp/edit-trail-live-evidence/verify.json`, and
-`/tmp/edit-trail-live-evidence/final-demo-mobile.png`.
+## Reproduce the blocker
 
-## Run and deploy
+Use a fresh Chromium context, visit `/`, wait for
+`navigator.serviceWorker.controller`, set the context offline, and choose
+**Try it with sample data**. The URL becomes `/demo/`, but the title and h1 are
+from home and no demo result appears. Inspecting `edit-trail-v4` shows the
+double-slash precache keys.
 
-```sh
-npm ci
-npm test
-npm run build
-/opt/fleet/lib/deploy-static.sh edit-trail-finder dist/site
-```
-
-No known gaps remain.
+Full evidence and required next steps are in
+[verification-5.md](verification-5.md). No product code was modified by the
+verifier.

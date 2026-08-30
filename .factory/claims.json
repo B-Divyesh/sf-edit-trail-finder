@@ -1,0 +1,58 @@
+[
+  {
+    "id": "sample-demo",
+    "claim": "The sample demo finds two of three sidecars for crop and denoise.",
+    "where": "landing page demo",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:sample-demo",
+    "sandbox": "fresh browser context; bundled sample; assert two result records"
+  },
+  {
+    "id": "linux-download",
+    "claim": "Download for Linux serves the release executable.",
+    "where": "landing page primary install actions",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:linux-download",
+    "sandbox": "production build; browser download; assert filename, ELF magic bytes, and nontrivial size"
+  },
+  {
+    "id": "recipe-download",
+    "claim": "The free audit recipe pack downloads without an account.",
+    "where": "landing page recipe section",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:recipe-download",
+    "sandbox": "fresh browser context; assert generated text download contains a documented combination query"
+  },
+  {
+    "id": "browser-local",
+    "claim": "Selected browser-demo sidecars are parsed locally and never uploaded.",
+    "where": "landing page demo and privacy page",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:browser-local",
+    "sandbox": "fresh browser context; choose an in-memory XMP file; record every request; assert no external request"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "The site and demo work offline after the first visit.",
+    "where": "landing page first-screen facts and privacy page",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:offline-reload",
+    "sandbox": "dedicated fresh browser context; wait for service worker; set context offline; reload and run demo"
+  },
+  {
+    "id": "local-sidecar-search",
+    "claim": "The CLI indexes XMP, DOP, and PP3 sidecars, normalizes aliases and history boundaries, records malformed files, and does not read image pixels.",
+    "where": "landing page facts, how-it-works section, and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:local-sidecar-search",
+    "sandbox": "temporary archive with three sidecar families, malformed XML, and a RAW marker; assert warnings, combination matches, and marker absence"
+  },
+  {
+    "id": "cli-outputs",
+    "claim": "The CLI writes machine-readable JSON and CSV plus a self-contained offline HTML report.",
+    "where": "landing page CLI reference and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:cli-outputs",
+    "sandbox": "fresh CLI demo directory; parse JSON summary; assert CSV schema and report with no external resource URLs"
+  },
+  {
+    "id": "cli-contract",
+    "claim": "CLI exit codes are 0 for success, 1 for I/O failures, 2 for invalid usage, and 3 for no matches.",
+    "where": "landing page CLI reference and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:cli-contract",
+    "sandbox": "fresh CLI demo directory; run success, missing-index, invalid-match, and no-match commands; assert exact codes"
+  }
+]

@@ -2,7 +2,6 @@ import "@fontsource/azeret-mono/500.css";
 import "@fontsource/azeret-mono/700.css";
 import "./styles.css";
 import { filterRecords, parseSidecars, SAMPLE, type DemoRecord } from "./demo";
-import { captureReturnedLicense, optimisticallyUnlocked, savedLicense, verifyLicense } from "./license";
 
 const query = <T extends Element>(selector: string): T | null => document.querySelector<T>(selector);
 const queryAll = <T extends Element>(selector: string): T[] => [...document.querySelectorAll<T>(selector)];
@@ -141,7 +140,7 @@ function setupDemo(): void {
   input.value = SAMPLE;
   parse();
   query<HTMLButtonElement>("[data-search]")?.addEventListener("click", renderResults);
-  query<HTMLButtonElement>("[data-reset-demo]")?.addEventListener("click", () => { input.value = SAMPLE; parse(); resultRoot.replaceChildren(); });
+  queryAll<HTMLButtonElement>("[data-reset-demo]").forEach((button) => button.addEventListener("click", () => { input.value = SAMPLE; parse(); resultRoot.replaceChildren(); }));
   fileInput.addEventListener("change", async () => {
     const files = [...(fileInput.files ?? [])];
     if (!files.length) return;
@@ -149,45 +148,18 @@ function setupDemo(): void {
     parse();
     resultRoot.replaceChildren();
   });
-}
-
-function setUnlocked(unlocked: boolean): void {
-  queryAll<HTMLElement>("[data-pro]").forEach((element) => { element.hidden = !unlocked; });
-  const buy = query<HTMLAnchorElement>("[data-buy]");
-  if (buy && unlocked) { buy.textContent = "Supporter license active"; buy.removeAttribute("href"); buy.setAttribute("aria-disabled", "true"); }
-}
-
-function statusText(message: string, isError = false): void {
-  const status = query<HTMLElement>("[data-license-status]");
-  if (status) { status.textContent = message; status.className = isError ? "error" : "success"; }
-}
-
-async function reconcileLicense(token: string, force = false): Promise<void> {
-  try {
-    const verdict = await verifyLicense(token, force);
-    setUnlocked(verdict.valid);
-    statusText(verdict.valid ? "License verified. Your recipe pack is unlocked." : "This license is no longer active. You can buy a new license above.", !verdict.valid);
-  } catch (error) {
-    statusText(error instanceof Error ? error.message : "License verification is temporarily unavailable.", true);
+  if (new URLSearchParams(window.location.search).get("demo") === "1") {
+    document.title = "Demo — Edit Trail";
+    requestAnimationFrame(() => {
+      document.getElementById("demo")?.scrollIntoView();
+      query<HTMLElement>("#demo-title")?.focus({ preventScroll: true });
+    });
   }
 }
 
-function setupLicense(): void {
-  setUnlocked(optimisticallyUnlocked());
-  const returned = captureReturnedLicense();
-  const token = returned ?? savedLicense();
-  if (token) void reconcileLicense(token, Boolean(returned));
-  query<HTMLButtonElement>("[data-show-restore]")?.addEventListener("click", () => {
-    const form = query<HTMLFormElement>("[data-restore-form]");
-    if (form) { form.hidden = false; query<HTMLInputElement>("#license-token")?.focus(); }
-  });
-  query<HTMLFormElement>("[data-restore-form]")?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const tokenValue = query<HTMLInputElement>("#license-token")?.value.trim();
-    if (tokenValue) void reconcileLicense(tokenValue, true);
-  });
+function setupRecipeDownload(): void {
   query<HTMLButtonElement>("[data-download-recipes]")?.addEventListener("click", () => {
-    const recipes = ["# Edit Trail archive audit recipes", "edit-trail operations", "edit-trail find -o masking --json", "edit-trail find -o crop --format csv", "edit-trail find -o denoise -o crop --match all", "edit-trail find -o exposure -o contrast --match any", "edit-trail find -o perspective --limit 20", "edit-trail report --output full-audit.html", "edit-trail report -o masking --output masking-audit.html", "edit-trail find -o lens-correction --json", "edit-trail find -o vignette --format csv", "edit-trail find -o color-balance-rgb --json", "edit-trail index ~/Pictures --include-hidden", "edit-trail find -o denoise --limit 1 --open"].join("\n");
+    const recipes = ["# Edit Trail archive audit recipes", "edit-trail find -o masking --json", "edit-trail find -o crop --format csv", "edit-trail find -o denoise -o crop --match all", "edit-trail find -o exposure -o contrast --match any", "edit-trail find -o perspective --limit 20", "edit-trail report --output full-audit.html", "edit-trail report -o masking --output masking-audit.html", "edit-trail find -o lens-correction --json", "edit-trail find -o vignette --format csv", "edit-trail find -o color-balance-rgb --json", "edit-trail index ~/Pictures --include-hidden", "edit-trail find -o denoise --limit 1 --open"].join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([recipes], { type: "text/plain" }));
     link.download = "edit-trail-audit-recipes.txt";
@@ -202,5 +174,5 @@ window.addEventListener("offline", () => setOfflineBanner(true));
 setupCopyButtons();
 setupTabs();
 setupDemo();
-setupLicense();
+setupRecipeDownload();
 if ("serviceWorker" in navigator && import.meta.env.PROD) window.addEventListener("load", () => void navigator.serviceWorker.register("/sw.js"));

@@ -96,3 +96,31 @@ fn empty_archive_is_a_successful_first_class_state() {
     assert!(output.status.success());
     assert!(String::from_utf8_lossy(&output.stdout).contains("No supported sidecars"));
 }
+
+#[test]
+fn demo_creates_searchable_sample_data_in_the_requested_sandbox() {
+    let parent = tempdir().unwrap();
+    let workspace = parent.path().join("demo-workspace");
+    let output = bin()
+        .args(["demo", "--output", workspace.to_str().unwrap(), "--json"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let summary: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(summary["sidecars"], 3);
+    assert_eq!(summary["matches"], 2);
+    assert!(workspace.join("edit-trail-demo.json").is_file());
+    let report = fs::read_to_string(workspace.join("edit-trail-demo-report.html")).unwrap();
+    assert!(report.contains("night-market-1842.NEF") && report.contains("lantern-0917.ARW"));
+
+    let repeated = bin()
+        .args(["demo", "--output", workspace.to_str().unwrap()])
+        .output()
+        .unwrap();
+    assert_eq!(repeated.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&repeated.stderr).contains("Choose a new --output directory"));
+}

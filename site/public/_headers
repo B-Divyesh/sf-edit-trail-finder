@@ -2,7 +2,12 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' https://api.sociobot.in; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in
+  Content-Security-Policy: default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'
+
+/downloads/edit-trail-linux-x86_64
+  Cache-Control: public, must-revalidate, max-age=30
+  Content-Disposition: attachment; filename=edit-trail-linux-x86_64
+  Content-Type: application/octet-stream
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

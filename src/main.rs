@@ -7,6 +7,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const DEFAULT_INDEX: &str = ".edit-trail.json";
 
@@ -32,6 +33,18 @@ enum Commands {
     Operations(CommonIndexArgs),
     /// Generate a self-contained offline HTML audit report
     Report(ReportArgs),
+    /// Create and search a bundled sample archive in an isolated directory
+    Demo(DemoArgs),
+}
+
+#[derive(Args, Debug)]
+struct DemoArgs {
+    /// New directory for the sample archive, index, and report
+    #[arg(long, value_name = "DIRECTORY")]
+    output: Option<PathBuf>,
+    /// Print the demo summary as JSON
+    #[arg(long)]
+    json: bool,
 }
 
 #[derive(Args, Debug)]
@@ -154,7 +167,94 @@ fn run(cli: Cli) -> Result<u8, String> {
         Commands::Find(args) => find_command(args),
         Commands::Operations(args) => operations_command(args),
         Commands::Report(args) => report_command(args),
+        Commands::Demo(args) => demo_command(args),
     }
+}
+
+#[derive(Serialize)]
+struct DemoSummary<'a> {
+    workspace: &'a Path,
+    archive: &'a Path,
+    index: &'a Path,
+    report: &'a Path,
+    sidecars: usize,
+    matches: usize,
+}
+
+fn demo_command(args: DemoArgs) -> Result<u8, String> {
+    let workspace = args.output.unwrap_or_else(|| {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis();
+        std::env::temp_dir().join(format!(
+            "edit-trail-demo-{}-{timestamp}",
+            std::process::id()
+        ))
+    });
+    if workspace.exists() {
+        return Err(format!(
+            "demo directory already exists: {}. Choose a new --output directory",
+            workspace.display()
+        ));
+    }
+    let archive = workspace.join("sample-archive");
+    fs::create_dir_all(&archive)
+        .map_err(|error| format!("could not create {}: {error}", archive.display()))?;
+    fs::write(
+        archive.join("night-market-1842.NEF.xmp"),
+        include_str!("../examples/sample-archive/night-market-1842.NEF.xmp"),
+    )
+    .map_err(|error| format!("could not write demo sidecar: {error}"))?;
+    fs::write(
+        archive.join("lantern-0917.ARW.xmp"),
+        include_str!("../examples/sample-archive/lantern-0917.ARW.xmp"),
+    )
+    .map_err(|error| format!("could not write demo sidecar: {error}"))?;
+    fs::write(
+        archive.join("after-rain-2201.RAF.pp3"),
+        include_str!("../examples/sample-archive/after-rain-2201.RAF.pp3"),
+    )
+    .map_err(|error| format!("could not write demo sidecar: {error}"))?;
+
+    let index = build_index(&archive, false, false)
+        .map_err(|error| format!("could not scan demo archive: {error}"))?;
+    let index_path = workspace.join("edit-trail-demo.json");
+    save_index(&index, &index_path)
+        .map_err(|error| format!("could not write {}: {error}", index_path.display()))?;
+    let wanted = ["denoise".to_string(), "crop".to_string()];
+    let matches = query_index(&index, &wanted, MatchMode::All);
+    let report_path = workspace.join("edit-trail-demo-report.html");
+    fs::write(
+        &report_path,
+        render_report(&index, &matches, &wanted, MatchArg::All),
+    )
+    .map_err(|error| format!("could not write {}: {error}", report_path.display()))?;
+
+    let summary = DemoSummary {
+        workspace: &workspace,
+        archive: &archive,
+        index: &index_path,
+        report: &report_path,
+        sidecars: index.sidecars_seen,
+        matches: matches.len(),
+    };
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&summary).map_err(|error| error.to_string())?
+        );
+    } else {
+        println!("Demo ready at {}", workspace.display());
+        println!(
+            "{} of {} sample sidecars match denoise + crop.",
+            matches.len(),
+            index.sidecars_seen
+        );
+        println!("Offline report: {}", report_path.display());
+        println!("Nothing was written outside this demo directory.");
+    }
+    Ok(0)
 }
 
 fn index_command(args: IndexArgs) -> Result<u8, String> {

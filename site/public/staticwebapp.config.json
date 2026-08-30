@@ -3,13 +3,22 @@
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' https://api.sociobot.in; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in"
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
   },
-  "navigationFallback": {
-    "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/*.{css,js,png,jpg,svg,webp,ico,woff2,json,txt,xml,wasm}"]
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/404.html"
+    }
   },
   "routes": [
+    {
+      "route": "/downloads/edit-trail-linux-x86_64",
+      "headers": {
+        "Cache-Control": "public, must-revalidate, max-age=30",
+        "Content-Disposition": "attachment; filename=edit-trail-linux-x86_64",
+        "Content-Type": "application/octet-stream"
+      }
+    },
     {
       "route": "/assets/*",
       "headers": {

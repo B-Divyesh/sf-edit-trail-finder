@@ -48,7 +48,7 @@ commands and report samples.
 
 ## Interaction grammar
 
-- Cyan is “act”: install, copy, search, restore.
+- Cyan is “act”: install, copy, search, reset, and download.
 - Pink is “edit trail”: active modules, selections, and matches.
 - Amber is “scan”: indexing, file counts, and cautions.
 - A single animated cyan trace draws from sidecar to result in the hero, so
@@ -56,6 +56,8 @@ commands and report samples.
 - Copy actions change label to “Copied” and announce through a live region.
 - Tabs behave as real ARIA tabs with arrow-key navigation. Focus uses a 3 px
   cyan outer ring with a 2 px ink gap.
+- The warm clipped ticket now contains free audit recipes. It keeps the
+  work-order shape language without advertising an unavailable paid service.
 
 Motion lasts 160–260 ms and uses only opacity/transform. Nothing flashes or
 loops indefinitely. With `prefers-reduced-motion: reduce`, the trace is fully

@@ -1,0 +1,6 @@
+[Version]
+AppVersion=5.11
+[Crop]
+Enabled=true
+[Color Balance RGB]
+Enabled=true

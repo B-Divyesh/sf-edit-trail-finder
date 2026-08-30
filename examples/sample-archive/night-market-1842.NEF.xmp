@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="rdf" xmlns:darktable="darktable">
+  <rdf:Description darktable:history_end="4">
+    <rdf:Seq>
+      <rdf:li darktable:num="0" darktable:operation="exposure" darktable:enabled="1" />
+      <rdf:li darktable:num="1" darktable:operation="denoiseprofile" darktable:enabled="1" />
+      <rdf:li darktable:num="2" darktable:operation="crop" darktable:enabled="1" />
+      <rdf:li darktable:num="3" darktable:operation="mask manager" darktable:enabled="1" />
+    </rdf:Seq>
+  </rdf:Description>
+</x:xmpmeta>

@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 const configPath = resolve("dist/site/staticwebapp.config.json");
 const config = JSON.parse(await readFile(configPath, "utf8"));
 const worker = await readFile(resolve("dist/site/sw.js"), "utf8");
-const csp = "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' https://api.sociobot.in; object-src 'none'; base-uri 'self'; form-action 'self' https://api.sociobot.in";
+const csp = "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
 const immutable = "public, max-age=31536000, immutable";
 const requiredHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -26,6 +26,17 @@ for (const route of immutableRoutes) {
   if (!config.routes?.some((entry) => entry.route === route && entry.headers?.["Cache-Control"] === immutable)) {
     throw new Error(`${configPath} is missing immutable caching for ${route}`);
   }
+}
+const downloadRoute = config.routes?.find((entry) => entry.route === "/downloads/edit-trail-linux-x86_64");
+if (downloadRoute?.headers?.["Content-Type"] !== "application/octet-stream" ||
+    downloadRoute?.headers?.["Content-Disposition"] !== "attachment; filename=edit-trail-linux-x86_64") {
+  throw new Error(`${configPath} must serve the Linux download as an attached binary`);
+}
+if (config.navigationFallback) {
+  throw new Error(`${configPath} must not rewrite missing extensionless downloads to the landing page`);
+}
+if (config.responseOverrides?.["404"]?.rewrite !== "/404.html") {
+  throw new Error(`${configPath} must provide the product-specific 404 page`);
 }
 if (worker.includes("staticwebapp.config.json")) {
   throw new Error("The Azure deployment manifest must not be precached by the service worker");

@@ -25,7 +25,7 @@ jobs:
             binary: target/aarch64-apple-darwin/release/edit-trail
             build: cargo build --release --target aarch64-apple-darwin
           - label: macOS x64
-            os: macos-13
+            os: macos-15-intel
             artifact: edit-trail-macos-x86_64
             target: x86_64-apple-darwin
             binary: target/x86_64-apple-darwin/release/edit-trail

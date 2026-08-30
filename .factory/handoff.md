@@ -78,13 +78,33 @@ response policy.
 
 ## Deployment and live identity
 
-Pending the final source push and deployment of `dist/site` to
-`sf-edit-trail-finder`. Record the deployed commit, content hash, live verifier,
-headers, and Lighthouse results here after deployment.
+- Pushed repair source commit `842478a` and evidence commit `9ae62d5` to
+  `origin/main`.
+- `/opt/fleet/lib/deploy-static.sh edit-trail-finder /work/repo/dist/site`:
+  deployed successfully to the existing `sf-edit-trail-finder` static app.
+  Deployment ID: `3792829e-3867-49fd-a012-34336c3fccd8`.
+- Live URL: <https://edit-trail-finder.sociobot.in/>; HTTPS returned 200.
+- Live and local `index.html` SHA-256 values match exactly:
+  `11903cbcc002d7fec64b42a4a774b737be9c54269115b68c0d80f34274f3aadb`.
+- `/opt/fleet/lib/verify-url.sh` passed on the live URL with zero console
+  errors and the required title, language, h1, main, alt text, and labels.
+- `node scripts/verify-live.mjs`: 86/86 checks, 0 console errors, 0 external
+  requests, and 0 Axe violations. Native downloads, desktop, 390 px mobile,
+  keyboard focus, demo isolation/reset, legal and 404 routes, and offline
+  reloads all passed.
+- Live response headers include the production CSP with
+  `frame-ancestors 'none'`, permissions policy, `nosniff`, strict referrer
+  policy, one-year immutable caching on the hashed JS, and attachment headers
+  on the 1,077,392-byte Linux executable.
+- Live Lighthouse mobile: performance 100, accessibility 100, best practices
+  100, SEO 100; LCP 1.4 s, CLS 0.033, and total blocking time 0 ms.
+- Desktop and 390×844 mobile screenshots were inspected after deployment;
+  neither showed clipping, overflow, overlap, or broken visual hierarchy.
 
 ## Known gaps and next steps
 
 No product gap is known. The original intermittent Vite socket reset did not
 recur locally before the repair; the independent verifier's exact failing trace
-is preserved in `.factory/verification-9.md`. Re-run independent verification
-against the deployed repair.
+is preserved in `.factory/verification-9.md`. The final handoff-only commit does
+not change the deployed artifact. Re-run independent verification against this
+deployed repair.

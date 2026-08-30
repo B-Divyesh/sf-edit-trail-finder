@@ -1,33 +1,90 @@
-# Edit Trail — independent verification 9 handoff
+# Edit Trail — repair 10 handoff
 
-## Status: FAIL
+## Status
 
-Candidate `b375823a1e64e6d064a916dfb21f91deb392e89f` is **not ready to
-release**. The first clean `npm test` run failed the mobile
-`@claim:cross-platform-downloads` test with a local preview-server
-`socket hang up` while fetching the Linux executable. An immediate full rerun
-passed (46 passed, 6 intentional host-only CLI skips), as did all 16 claim
-commands individually, so this is an intermittent gate failure. It remains a
-release blocker until the normal quality gate passes reliably.
+The release-blocking finding in independent verification 9 is repaired. The
+product behavior and visual system from candidate
+`b375823a1e64e6d064a916dfb21f91deb392e89f` are unchanged.
 
-See `.factory/verification-9.md` for exact output, all claim results, live
-deployment parity, privacy/accessibility/performance evidence, and the repair
-requirement.
+The verifier's first clean `npm test` lost the preview socket while the mobile
+project fetched the Linux executable. Its immediate rerun passed. Before the
+repair, this checkout also passed one clean `npm test` and 60 repetitions of
+the exact download claim. That matches an intermittent infrastructure failure;
+it was not possible to force another reset on demand.
 
-## What was verified
+## Root cause and repair
 
-- `npm ci`, all 16 exact claim commands, one full `npm test` plus an immediate
-  full-browser-suite rerun, production build, TypeScript, formatting, strict
-  Clippy, crate packaging, and a clean consumer installation of the public
-  CLI.
-- Live URL: <https://edit-trail-finder.sociobot.in/>. Its home HTML exactly
-  matches the candidate build; the live verifier passed 86/86 checks with no
-  external requests, console errors, or Axe violations.
-- CLI demo, output query, browser demo normal/invalid/empty/reset paths,
-  keyboard/mobile/offline behavior, headers/caching, and Lighthouse mobile
-  (99 performance; 100 accessibility, best practices, and SEO).
+The browser gate used Vite's generic preview command to own the production
+artifact and process lifetime. That path had no product-level contract for
+concurrent binary streams or graceful shutdown, and no test checked whether the
+same server remained alive after those responses.
 
-## Required next step
+The repair adds `scripts/preview-site.mjs`, a dependency-free static server for
+`dist/site`. It:
 
-Stabilize the parallel Playwright preview/download test and show repeated
-clean `npm test` passes. No product code was changed by this verifier.
+- streams files with explicit content lengths and production response headers;
+- serves exact directory routes and the configured 404 document;
+- handles concurrent binary responses independently;
+- stops accepting work only after `SIGINT` or `SIGTERM`;
+- drains active responses and closes idle connections before exiting.
+
+Playwright now starts that process directly and gives it a five-second graceful
+shutdown window. The cross-platform claim fetches all four downloads in
+parallel in both projects. It retains the Linux ELF, macOS Mach-O, and Windows
+PE signature assertions, checks attachment names, then confirms the preview
+still serves the home page.
+
+`site/src/preview-server.test.ts` is the deterministic lifetime regression. It
+starts the real preview server on an ephemeral port, fetches twelve concurrent
+1.1 MB native fixtures, verifies every byte count and signature, probes the
+same process afterward, sends `SIGTERM`, and requires exit code 0.
+
+## Local verification
+
+Run from `/work/repo` on 30 August 2026:
+
+- `npm ci`: passed; 63 packages audited, 0 vulnerabilities.
+- `npm test`: passed three consecutive times after the clean install. Every run
+  passed 6 Rust unit tests, 3 Rust integration tests, 1 doctest, 11 Vitest
+  tests, and 46 Playwright checks; 6 duplicate host-only CLI cases skipped in
+  the mobile project.
+- All 16 exact commands in `.factory/claims.json`: passed independently.
+- `npx playwright test --grep @claim:cross-platform-downloads --repeat-each=30 --workers=2`:
+  60/60 passed after the repair with no socket resets.
+- `npx tsc --noEmit`, `cargo fmt --check`, and
+  `cargo clippy --all-targets -- -D warnings`: passed.
+- `npm run build`: passed. `dist/site` contains the static site and four native
+  downloads. Main JS is 16.50 kB (6.36 kB gzip); CSS is 20.29 kB (5.39 kB
+  gzip).
+- `cargo package --allow-dirty`: passed; 16 files, 67.0 KiB unpacked and 19.5
+  KiB compressed.
+- Clean consumer install from `target/package/edit-trail-0.1.0`: passed.
+  Installed `edit-trail --help`, `demo --json`, and a crop + denoise query all
+  passed; the query returned the expected two records.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173 ...`: passed with the
+  correct title, `lang=en`, one h1, one main, labelled images and buttons, and
+  zero console errors.
+- `node scripts/verify-live.mjs http://127.0.0.1:4173 ...`: 86/86 checks, 0
+  console errors, 0 external requests, and 0 Axe WCAG 2 A/AA violations.
+- Lighthouse mobile against the production preview: performance 99,
+  accessibility 100, best practices 100, SEO 100; LCP 2.0 s, CLS 0.033, and
+  total blocking time 0 ms.
+
+The Playwright suite covers desktop and 390×844 mobile layout, keyboard focus,
+the navigation disclosure, reduced motion, all routes, 404 behavior, local-only
+file parsing, offline install/reload/update behavior, and every registered
+claim. The build checks production security, download, and immutable-cache
+response policy.
+
+## Deployment and live identity
+
+Pending the final source push and deployment of `dist/site` to
+`sf-edit-trail-finder`. Record the deployed commit, content hash, live verifier,
+headers, and Lighthouse results here after deployment.
+
+## Known gaps and next steps
+
+No product gap is known. The original intermittent Vite socket reset did not
+recur locally before the repair; the independent verifier's exact failing trace
+is preserved in `.factory/verification-9.md`. Re-run independent verification
+against the deployed repair.

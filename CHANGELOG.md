@@ -6,6 +6,10 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- Replace Vite's test preview process with a lifecycle-owned static server so
+  concurrent native-download checks cannot lose the preview socket.
+- Exercise every platform download in parallel and verify the preview remains
+  available before Playwright shuts it down gracefully.
 - Cache the canonical demo, privacy, and terms routes so each page reopens
   with its own content while offline.
 - Parse DxO PhotoLab's DOP table format and preserve active and inactive

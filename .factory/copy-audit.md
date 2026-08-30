@@ -1,54 +1,51 @@
-# Landing-page copy audit
+# Copy audit — 30 August 2026
 
-Audited 30 August 2026. Counts treat hyphenated terms as one word. Commands,
-file names, terminal output, navigation labels, and single-word controls are
-listed where useful but are not sentence-length copy.
+Every visitor-facing sentence in the landing page and README was checked after
+the polish. No sentence exceeds 22 words. No banned marketing word appears.
 
-| Words | Copy |
+## Landing page
+
+| Words | Sentence |
 | ---: | --- |
-| 6 | Find photos by their editing steps |
-| 18 | For photographers using RAW editors, Edit Trail searches masking, denoise, crop, and other active operations across local sidecars. |
-| 5 | Try it with sample data |
-| 10 | The sample opens below with three sidecars ready to search. |
-| 4 | Runs on your computer |
-| 6 | Works offline after the first visit |
-| 5 | Free under the MIT License |
-| 6 | Index editing steps in three commands |
-| 18 | Edit Trail reads each supported sidecar, records active operations, and builds a small local index you can search. |
-| 13 | Walk XMP, DOP, and PP3 files recursively. Broken files become warnings, not roadblocks. |
-| 11 | Map editor-specific names and enabled states into one visible operation trail. |
+| 15 | For photographers using RAW editors who need to find masking, denoise, crop, or other active edits. |
+| 7 | See two matching sample photos immediately. |
+| 12 | Edit Trail reads each supported sidecar, records active operations, and builds a small local index you can search. |
+| 14 | Map editor-specific names and enabled states into one visible editing step. |
 | 15 | Require all operations or match any, then print paths, JSON, CSV, or a static report. |
-| 6 | Demo — sample data, nothing is saved |
-| 4 | Search sample editing steps |
-| 15 | Paste XMP or choose local sidecars. Parsing stays in this tab; files are never uploaded. |
-| 11 | Files stay in browser memory and disappear when this tab closes. |
-| 3 | Use four commands |
-| 14 | Index an archive, find matching files, list operation names, or write an offline report. |
-| 4 | Continues past malformed sidecars |
-| 4 | Honours darktable history boundaries |
-| 4 | Normalises common module aliases |
-| 7 | Uses exit code 3 for no matches |
-| 5 | Produces a self-contained offline report |
-| 5 | Download 12 archive audit recipes |
-| 19 | The recipe pack covers masking, crop, denoise, reports, CSV, JSON, and hidden sidecars. It is free with the CLI. |
-| 3 | 12 copy-ready commands |
-| 4 | No account or payment |
-| 5 | Plain text for any terminal |
+| 10 | Paste XMP or choose local sidecars. Parsing stays in this tab; files are never uploaded. |
+| 13 | Index an archive, find matching files, list operation names, or write an offline report. |
+| 14 | The recipe pack covers masking, crop, denoise, reports, CSV, JSON, and hidden sidecars. |
+| 6 | It is free with the CLI. |
 | 11 | The download is generated in your browser and contains commands only. |
-| 4 | Search your own sidecars |
-| 7 | No catalogue migration or upload is required. |
+| 10 | Choose a native download, or build from source with Rust. |
 
-No sentence exceeds 22 words. No copy uses the banned terms: leverage,
-seamless, effortless, robust, powerful, intuitive, reimagine, supercharge,
-unlock, delightful, journey, ecosystem, or AI-powered.
+Dynamic states are also concise: “2 of 3 sidecars match all selected
+operations.” (9), “No matching trails.” (3), and “Could not parse
+filename.pp3.” (4).
+
+## README
+
+| Words | Sentence |
+| ---: | --- |
+| 18 | Edit Trail is a local CLI for photographers who need to find RAW files by their editing steps. |
+| 13 | It indexes XMP, DOP, and PP3 sidecars from common RAW editors. |
+| 10 | It normalises active editing steps, then searches combinations such as denoise plus crop. |
+| 8 | It never reads or uploads image pixels. |
+| 12 | The demo uses browser memory and does not upload selected sidecars. |
+| 10 | Download the Linux executable from the product site. |
+| 12 | On macOS or Windows, build from source with a current Rust toolchain. |
+| 13 | It creates a temporary three-sidecar archive, index, and offline report. |
+| 11 | Exit codes are 0 for success, 1 for I/O or parse failures, and 2 for invalid usage. |
+| 10 | A find query with no matches returns 3. |
+| 13 | Malformed sidecars become warnings, so one file does not stop an archive scan. |
+| 14 | The index contains paths, timestamps, editor families, active editing steps, and warnings. |
+| 7 | It does not contain image bytes. |
 
 ## Terminology
 
-| Concept | One term used |
+| Concept | One term |
 | --- | --- |
-| Metadata file beside a photo | sidecar |
-| Recorded enabled edit | active operation |
-| Searchable local metadata file | index |
-| Browser-only trial | demo |
-| Reusable command collection | recipe pack |
-| Self-contained output page | offline report |
+| User-visible edit | editing step |
+| Stored editor field | operation |
+| Supplemental editor file | sidecar |
+| Translation into shared names | normalise operation names |

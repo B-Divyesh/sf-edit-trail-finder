@@ -3,7 +3,7 @@
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-    "Content-Security-Policy": "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   },
   "responseOverrides": {
     "404": {
@@ -16,6 +16,30 @@
       "headers": {
         "Cache-Control": "public, must-revalidate, max-age=30",
         "Content-Disposition": "attachment; filename=edit-trail-linux-x86_64",
+        "Content-Type": "application/octet-stream"
+      }
+    },
+    {
+      "route": "/downloads/edit-trail-macos-arm64",
+      "headers": {
+        "Cache-Control": "public, must-revalidate, max-age=30",
+        "Content-Disposition": "attachment; filename=edit-trail-macos-arm64",
+        "Content-Type": "application/octet-stream"
+      }
+    },
+    {
+      "route": "/downloads/edit-trail-macos-x86_64",
+      "headers": {
+        "Cache-Control": "public, must-revalidate, max-age=30",
+        "Content-Disposition": "attachment; filename=edit-trail-macos-x86_64",
+        "Content-Type": "application/octet-stream"
+      }
+    },
+    {
+      "route": "/downloads/edit-trail-windows-x86_64.exe",
+      "headers": {
+        "Cache-Control": "public, must-revalidate, max-age=30",
+        "Content-Disposition": "attachment; filename=edit-trail-windows-x86_64.exe",
         "Content-Type": "application/octet-stream"
       }
     },

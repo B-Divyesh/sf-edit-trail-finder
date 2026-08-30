@@ -1,4 +1,4 @@
-const CACHE = "edit-trail-v3";
+const CACHE = "edit-trail-v4";
 const CORE = __EDIT_TRAIL_PRECACHE__;
 
 self.addEventListener("install", (event) => {

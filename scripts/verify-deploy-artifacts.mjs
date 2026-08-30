@@ -18,4 +18,20 @@ if (!page.includes('href="/downloads/edit-trail-linux-x86_64"')) {
   throw new Error("The landing page does not point to the deployed executable");
 }
 
-console.log(`Verified deployable Linux executable (${binary.length} bytes)`);
+const nativeDownloads = [
+  ["edit-trail-macos-arm64", Buffer.from([0xcf, 0xfa, 0xed, 0xfe])],
+  ["edit-trail-macos-x86_64", Buffer.from([0xcf, 0xfa, 0xed, 0xfe])],
+  ["edit-trail-windows-x86_64.exe", Buffer.from([0x4d, 0x5a])]
+];
+for (const [name, magic] of nativeDownloads) {
+  const path = resolve(root, "downloads", name);
+  const bytes = await readFile(path);
+  if (bytes.length < 100_000 || !bytes.subarray(0, magic.length).equals(magic)) {
+    throw new Error(`${path} is not a native release executable`);
+  }
+  if (!page.includes(`href="/downloads/${name}"`)) {
+    throw new Error(`The landing page does not expose ${name}`);
+  }
+}
+
+console.log(`Verified deployable native executables (Linux ${binary.length} bytes plus macOS and Windows)`);

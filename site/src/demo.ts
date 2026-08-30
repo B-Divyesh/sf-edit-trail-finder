@@ -26,19 +26,19 @@ export const SAMPLE = `--- FILE: night-market-1842.NEF.xmp
     </rdf:Seq></darktable:history>
   </rdf:Description>
 </x:xmpmeta>
---- FILE: lantern-0917.ARW.xmp
+--- FILE: lantern-0917.ARW.dop
 <x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="rdf" xmlns:crs="camera-raw">
   <rdf:Description crs:HasCrop="True" crs:LuminanceSmoothing="28" crs:Exposure2012="0.45">
     <crs:MaskGroupBasedCorrections />
   </rdf:Description>
 </x:xmpmeta>
---- FILE: after-rain-2201.RAF.xmp
-<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="rdf" xmlns:darktable="darktable">
-  <rdf:Description darktable:history_end="2">
-    <rdf:li darktable:num="0" darktable:operation="color balance rgb" darktable:enabled="1" />
-    <rdf:li darktable:num="1" darktable:operation="crop" darktable:enabled="1" />
-  </rdf:Description>
-</x:xmpmeta>`;
+--- FILE: after-rain-2201.RAF.pp3
+[Version]
+AppVersion=5.11
+[Crop]
+Enabled=true
+[Color Balance RGB]
+Enabled=true`;
 
 export function normalizeOperation(value: string): string {
   const clean = value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
@@ -259,6 +259,7 @@ export function isWellFormedXml(input: string): boolean {
 export function parseSidecars(input: string): DemoRecord[] {
   if (!input.trim()) return [];
   return splitDocuments(input).map(({ name, xml }) => {
+    if (/\.pp3$/i.test(name)) return parsePp3(name, xml);
     const elements = parseXmlElements(xml);
     if (!elements) throw new Error(`Could not parse ${name}. Check that its XML is complete.`);
     const operations = new Set<string>();
@@ -289,6 +290,30 @@ export function parseSidecars(input: string): DemoRecord[] {
     if (editor === "Generic XMP" && operations.size > 0) editor = "Adobe Camera Raw / Lightroom";
     return { name, editor, operations: [...operations].sort() };
   });
+}
+
+/** Parse the same conservative Enabled=true PP3 convention as the CLI. */
+function parsePp3(name: string, content: string): DemoRecord {
+  let section = "";
+  const operations = new Set<string>();
+  let sawSection = false;
+  for (const sourceLine of content.split(/\r?\n/)) {
+    const line = sourceLine.trim();
+    if (!line || line.startsWith("#") || line.startsWith(";")) continue;
+    const heading = /^\[([^\]]+)]$/.exec(line);
+    if (heading) {
+      section = normalizeOperation(heading[1]);
+      sawSection = true;
+      continue;
+    }
+    const pair = /^([^=]+)=(.*)$/.exec(line);
+    if (!pair) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
+    if (pair[1].trim().toLowerCase() === "enabled" && truthy(pair[2]) && section && section !== "version") {
+      operations.add(section);
+    }
+  }
+  if (!sawSection) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
+  return { name, editor: "RawTherapee", operations: [...operations].sort() };
 }
 
 export function filterRecords(records: DemoRecord[], selected: string[], mode: "all" | "any"): DemoRecord[] {

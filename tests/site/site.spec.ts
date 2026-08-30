@@ -1,25 +1,51 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const productionCsp = "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
+const productionCsp = "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
 
-test("@claim:sample-demo home completes the sample search with no serious accessibility issues", async ({ page }) => {
+test("@claim:sample-demo hero opens an isolated sample with visible results in one click", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   await page.goto("/");
   await expect(page).toHaveTitle(/Edit Trail/);
   await expect(page.locator("h1")).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Find photos by their editing steps");
-  await page.getByRole("button", { name: /Find matching files/ }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Find RAW photos by editing steps");
+  await page.getByRole("link", { name: "Try it with sample data" }).click();
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page).toHaveTitle("Demo — Edit Trail");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Search sample editing steps");
+  await expect(page.getByText("Demo — sample data, nothing is saved")).toBeVisible();
   await expect(page.locator("[data-demo-status]")).toContainText("2 of 3 sidecars");
   await expect(page.locator("[data-demo-results] article")).toHaveCount(2);
+  await expect(page.locator("[data-demo-results]")).toContainText("night-market-1842.NEF");
+  await expect(page.locator("[data-demo-results]")).toContainText("lantern-0917.ARW");
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
+  expect(results.violations).toEqual([]);
   expect(consoleErrors).toEqual([]);
+});
+
+test("demo query entry redirects to the real sandbox route and its exit discards the mode", async ({ page }) => {
+  await page.goto("/?demo=1");
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page.getByText("Demo — sample data, nothing is saved")).toBeVisible();
+  await page.getByRole("link", { name: "View install options" }).click();
+  await expect(page).toHaveURL(/\/#install$/);
+  await expect(page.getByText("Demo — sample data, nothing is saved")).toBeHidden();
+});
+
+test("browser Back returns focus to the sample-demo trigger", async ({ page }) => {
+  await page.goto("/");
+  const trigger = page.getByRole("link", { name: "Try it with sample data" });
+  await trigger.focus();
+  await trigger.click();
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(trigger).toBeFocused();
 });
 
 test("demo exposes actionable malformed and empty states", async ({ page }) => {
@@ -86,6 +112,22 @@ test("@claim:linux-download browser receives the release executable, not HTML", 
   expect(bytes.length).toBeGreaterThan(100_000);
 });
 
+test("@claim:cross-platform-downloads exposes executable bytes for every named platform", async ({ page, request }) => {
+  await page.goto("/#install");
+  await expect(page.locator(".platform-downloads a")).toHaveCount(4);
+  const expected = [
+    ["/downloads/edit-trail-linux-x86_64", [0x7f, 0x45, 0x4c, 0x46]],
+    ["/downloads/edit-trail-macos-arm64", [0xcf, 0xfa, 0xed, 0xfe]],
+    ["/downloads/edit-trail-macos-x86_64", [0xcf, 0xfa, 0xed, 0xfe]],
+    ["/downloads/edit-trail-windows-x86_64.exe", [0x4d, 0x5a]]
+  ];
+  for (const [path, signature] of expected) {
+    const response = await request.get(path as string);
+    expect(response.ok()).toBe(true);
+    expect([... (await response.body()).subarray(0, (signature as number[]).length)]).toEqual(signature);
+  }
+});
+
 test("@claim:recipe-download audit recipes download without an account", async ({ page }) => {
   await page.goto("/#recipes");
   const downloadPromise = page.waitForEvent("download");
@@ -106,7 +148,26 @@ test("legal pages render and mobile layout does not overflow", async ({ page }) 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
     const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
+    expect(results.violations).toEqual([]);
+  }
+});
+
+test("all routes provide their own sharing metadata and the shared shell", async ({ page }) => {
+  const expected = new Map([
+    ["/", "Edit Trail — Find photos by what you did to them"],
+    ["/demo/", "Demo — Edit Trail"],
+    ["/privacy/", "Privacy — Edit Trail"],
+    ["/terms/", "Terms — Edit Trail"],
+    ["/404.html", "Page not found — Edit Trail"]
+  ]);
+  for (const [path, title] of expected) {
+    await page.goto(path);
+    await expect(page).toHaveTitle(title);
+    for (const selector of ["meta[name=description]", "link[rel=canonical]", "meta[property='og:title']", "meta[name='twitter:card']", "link[rel='apple-touch-icon']"]) {
+      await expect(page.locator(selector)).toHaveCount(1);
+    }
+    await expect(page.getByRole("navigation", { name: "Main navigation" })).toContainText("Try sample data");
+    await expect(page.locator("footer")).toContainText("Built by Param Factory");
   }
 });
 
@@ -120,6 +181,16 @@ test("mobile type and direct links meet the supplied baseline", async ({ page })
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
+test("first-screen facts stay inside desktop and mobile viewports", async ({ page }) => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/");
+    const box = await page.locator(".hero-facts li").nth(2).boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+  }
+});
+
 test("@claim:browser-local demo parses selected files without an upload", async ({ page }) => {
   const externalRequests: string[] = [];
   const demoRequests: string[] = [];
@@ -128,7 +199,7 @@ test("@claim:browser-local demo parses selected files without an upload", async 
     if (url.origin !== "http://127.0.0.1:4173") externalRequests.push(request.url());
     demoRequests.push(`${request.method()} ${url.pathname}`);
   });
-  await page.goto("/?demo=1#demo");
+  await page.goto("/demo/");
   await expect(page).toHaveTitle("Demo — Edit Trail");
   demoRequests.length = 0;
   await page.locator("#sidecar-files").setInputFiles({
@@ -145,6 +216,35 @@ test("@claim:browser-local demo parses selected files without an upload", async 
     session: Object.keys(sessionStorage),
     indexedDb: await indexedDB.databases()
   }))).toEqual({ local: [], session: [], indexedDb: [] });
+});
+
+test("@claim:no-runtime-third-parties root page makes no third-party runtime request", async ({ page }) => {
+  const requests: string[] = [];
+  page.on("request", (request) => requests.push(request.url()));
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  expect(requests).not.toEqual([]);
+  expect(requests.every((url) => new URL(url).origin === "http://127.0.0.1:4173")).toBe(true);
+});
+
+test("@claim:browser-sidecar-formats browser demo accepts XMP, DOP, and PP3 sidecars", async ({ page }) => {
+  await page.goto("/demo/");
+  await page.locator("#sidecar-files").setInputFiles([
+    { name: "xmp.NEF.xmp", mimeType: "text/xml", buffer: Buffer.from('<sidecar><module operation="crop" enabled="true" /></sidecar>') },
+    { name: "dxo.dop", mimeType: "text/xml", buffer: Buffer.from('<sidecar><module operation="denoise" enabled="true" /></sidecar>') },
+    { name: "rawtherapee.pp3", mimeType: "text/plain", buffer: Buffer.from("[Crop]\nEnabled=true\n") }
+  ]);
+  await page.getByLabel("Any selected").check();
+  await page.getByRole("button", { name: /Find matching files/ }).click();
+  await expect(page.locator("[data-demo-status]")).toContainText("3 of 3 sidecars");
+  await expect(page.locator("[data-demo-results] article")).toHaveCount(3);
+});
+
+test("@claim:mit-license ships the MIT license and identifies it in the first-screen facts", async ({ page }) => {
+  expect(existsSync(resolve("LICENSE"))).toBe(true);
+  expect(readFileSync(resolve("LICENSE"), "utf8")).toContain("Permission is hereby granted, free of charge");
+  await page.goto("/");
+  await expect(page.locator(".hero-facts")).toContainText("MIT licensed");
 });
 
 test("@claim:offline-reload installed shell reloads with an explicit offline state", async ({ browser }) => {
@@ -164,10 +264,10 @@ test("@claim:offline-reload installed shell reloads with an explicit offline sta
       return { waiting: Boolean(registration.waiting), caches: await caches.keys() };
     });
     expect(workerState.waiting).toBe(false);
-    expect(workerState.caches).toContain("edit-trail-v3");
+    expect(workerState.caches).toContain("edit-trail-v4");
     await context.setOffline(true);
     await page.reload({ waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Find photos by their editing steps");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Find RAW photos by editing steps");
     await page.waitForFunction(() => document.querySelector("[data-operation-options]")?.childElementCount);
     await page.evaluate(() => window.dispatchEvent(new Event("offline")));
     await expect(page.locator("[data-offline]")).toBeVisible();

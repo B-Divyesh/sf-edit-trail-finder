@@ -1,0 +1,1 @@
+Find RAW photos by their active editing steps in local sidecar files.

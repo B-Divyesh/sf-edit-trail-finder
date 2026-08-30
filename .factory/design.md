@@ -89,4 +89,6 @@ deployment, then stripped and converted from PNG to a 148 KB WebP using
 ImageMagick. The final asset is original to this product and distributed under
 the repository’s MIT license. Responsive 720 px (43 KB) and 1080 px (87 KB)
 derivatives accompany the 1440 px source so mobile never downloads the desktop
-hero unnecessarily.
+hero unnecessarily. `edit-trail-share-card.webp` and `apple-touch-icon.png`
+are deterministic 1200×630 and 180×180 crops of that original artwork, made
+on 30 August 2026 with ImageMagick; they add no external asset or license.

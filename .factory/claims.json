@@ -14,8 +14,15 @@
     "sandbox": "production build; browser download; assert filename, ELF magic bytes, and nontrivial size"
   },
   {
+    "id": "cross-platform-downloads",
+    "claim": "Native downloads are available for Linux x64, macOS arm64/x64, and Windows x64.",
+    "where": "install downloads",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:cross-platform-downloads",
+    "sandbox": "production build; request each named download and assert its native executable signature"
+  },
+  {
     "id": "recipe-download",
-    "claim": "The free audit recipe pack downloads without an account.",
+    "claim": "The free audit recipe pack downloads 12 plain-text commands without an account.",
     "where": "landing page recipe section",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:recipe-download",
     "sandbox": "fresh browser context; assert generated text download contains a documented combination query"
@@ -28,6 +35,20 @@
     "sandbox": "fresh browser context; choose an in-memory XMP file; record every request; assert no external request"
   },
   {
+    "id": "no-runtime-third-parties",
+    "claim": "The site has no analytics, advertising, account, or payment runtime requests.",
+    "where": "privacy policy and recipe section",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:no-runtime-third-parties",
+    "sandbox": "fresh production-browser context; record all root-page requests and assert they stay on the product origin"
+  },
+  {
+    "id": "browser-sidecar-formats",
+    "claim": "The browser demo accepts XMP, DOP, and PP3 sidecars.",
+    "where": "browser demo file picker",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:browser-sidecar-formats",
+    "sandbox": "fresh demo route; upload one in-memory XMP, DOP, and PP3 file; assert all three parse and render"
+  },
+  {
     "id": "offline-reload",
     "claim": "The site and demo work offline after the first visit.",
     "where": "landing page first-screen facts and privacy page",
@@ -36,7 +57,7 @@
   },
   {
     "id": "local-sidecar-search",
-    "claim": "The CLI indexes XMP, DOP, and PP3 sidecars, normalizes aliases and history boundaries, records malformed files, and does not read image pixels.",
+    "claim": "The CLI indexes XMP, DOP, and PP3 sidecars, normalises aliases and history boundaries, records malformed files, and does not read image pixels.",
     "where": "landing page facts, how-it-works section, and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:local-sidecar-search",
     "sandbox": "temporary archive with three sidecar families, malformed XML, and a RAW marker; assert warnings, combination matches, and marker absence"
@@ -54,5 +75,12 @@
     "where": "landing page CLI reference and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:cli-contract",
     "sandbox": "fresh CLI demo directory; run success, missing-index, invalid-match, and no-match commands; assert exact codes"
+  },
+  {
+    "id": "mit-license",
+    "claim": "Edit Trail is MIT licensed.",
+    "where": "landing-page first-screen facts and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:mit-license",
+    "sandbox": "production site and shipped repository license; assert visible MIT fact and MIT license text"
   }
 ]

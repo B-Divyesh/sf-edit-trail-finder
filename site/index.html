@@ -7,7 +7,19 @@
     <meta name="description" content="Edit Trail finds RAW photos by active edits in local XMP sidecars—masking, denoise, crop, and more." />
     <link rel="canonical" href="https://edit-trail-finder.sociobot.in/" />
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Edit Trail — Find photos by editing steps" />
+    <meta property="og:description" content="Find RAW photos by active edits in local sidecar files." />
+    <meta property="og:url" content="https://edit-trail-finder.sociobot.in/" />
+    <meta property="og:image" content="https://edit-trail-finder.sociobot.in/edit-trail-share-card.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Edit Trail — Find photos by editing steps" />
+    <meta name="twitter:description" content="Find RAW photos by active edits in local sidecar files." />
+    <meta name="twitter:image" content="https://edit-trail-finder.sociobot.in/edit-trail-share-card.webp" />
     <title>Edit Trail — Find photos by what you did to them</title>
   </head>
   <body data-page="home">
@@ -15,18 +27,18 @@
     <div class="offline-bar" data-offline hidden role="status">Offline mode — the demo and docs still work locally.</div>
     <header class="site-header">
       <a class="brand" href="/" aria-label="Edit Trail home"><svg aria-hidden="true" viewBox="0 0 42 42"><path d="M7 7h12v12H7zM23 7h12v12H23zM7 23h12v12H7z"/><path class="trail" d="M25 29h10m-5-5 5 5-5 5"/></svg><span>Edit Trail</span></a>
-      <nav aria-label="Main navigation"><a href="/?demo=1#demo">Try it</a><a href="#docs">Docs</a><a href="#recipes">Recipes</a><a class="nav-cta" href="#install">Install</a></nav>
+      <nav aria-label="Main navigation"><a href="/demo/">Try sample data</a><a href="#docs">CLI guide</a><a href="/privacy/">Privacy</a><a class="nav-cta" href="#install">Install</a></nav>
     </header>
 
     <main id="main" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Local sidecar search / v0.1</p>
-          <h1 id="hero-title">Find photos by their editing steps</h1>
-          <p class="lede">For photographers using RAW editors, Edit Trail searches masking, denoise, crop, and other active operations across local sidecars.</p>
-          <div class="hero-actions" id="install"><a class="button primary" href="/?demo=1#demo">Try it with sample data</a><a class="button quiet" href="/downloads/edit-trail-linux-x86_64" download>Download for Linux</a><button class="button quiet copy-button" type="button" data-copy="cargo install --git https://github.com/B-Divyesh/sf-edit-trail-finder.git">Copy install command</button></div>
-          <p class="action-note">The sample opens below with three sidecars ready to search.</p>
-          <ul class="hero-facts"><li>Runs on your computer</li><li>Works offline after the first visit</li><li>Free under the MIT License</li></ul>
+          <h1 id="hero-title">Find RAW photos by editing steps</h1>
+          <p class="lede">For photographers using RAW editors who need to find masking, denoise, crop, or other active edits.</p>
+          <div class="hero-actions" id="install"><a class="button primary" href="/demo/">Try it with sample data</a><a class="button quiet" href="/downloads/edit-trail-linux-x86_64" download>Download for Linux</a><button class="button quiet copy-button" type="button" data-copy="cargo install --git https://github.com/B-Divyesh/sf-edit-trail-finder.git">Copy install command</button></div>
+          <p class="action-note">See two matching sample photos immediately.</p>
+          <ul class="hero-facts"><li>Local sidecar processing</li><li>Works offline after the first visit</li><li>MIT licensed</li></ul>
         </div>
         <div class="hero-visual">
           <img src="/edit-trail-night-market.webp" srcset="/edit-trail-night-market-720.webp 720w, /edit-trail-night-market-1080.webp 1080w, /edit-trail-night-market.webp 1440w" sizes="(max-width: 900px) 100vw, 56vw" width="1440" height="960" alt="An illustrated night market of hanging metadata sheets connected by cyan and pink edit trails" fetchpriority="high" />
@@ -34,22 +46,22 @@
         </div>
       </section>
 
-      <section class="proof-strip" aria-label="Product facts"><div><strong>100%</strong><span>local</span></div><div><strong>3</strong><span>sidecar families</span></div><div><strong>0</strong><span>pixels indexed</span></div><div><strong>JSON</strong><span>automation ready</span></div></section>
+      <section class="proof-strip" aria-label="Product facts"><div><strong>LOCAL</strong><span>sidecar search</span></div><div><strong>3</strong><span>sidecar families</span></div><div><strong>0</strong><span>pixels indexed</span></div><div><strong>JSON</strong><span>automation ready</span></div></section>
 
       <section class="story section" aria-labelledby="story-title">
         <div class="section-heading"><p class="eyebrow">How it works</p><h2 id="story-title">Index editing steps in three commands</h2><p>Edit Trail reads each supported sidecar, records active operations, and builds a small local index you can search.</p></div>
         <ol class="route">
           <li><span>01</span><svg aria-hidden="true" viewBox="0 0 48 48"><path d="M12 5h18l7 7v31H12zM30 5v9h8M18 23h13M18 30h13"/></svg><h3>Scan sidecars</h3><p>Walk XMP, DOP, and PP3 files recursively. Broken files become warnings, not roadblocks.</p></li>
-          <li><span>02</span><svg aria-hidden="true" viewBox="0 0 48 48"><path d="M8 13h32M8 24h32M8 35h32M17 8v10M31 19v10M22 30v10"/></svg><h3>Normalize modules</h3><p>Map editor-specific names and enabled states into one visible operation trail.</p></li>
+          <li><span>02</span><svg aria-hidden="true" viewBox="0 0 48 48"><path d="M8 13h32M8 24h32M8 35h32M17 8v10M31 19v10M22 30v10"/></svg><h3>Normalise operation names</h3><p>Map editor-specific names and enabled states into one visible editing step.</p></li>
           <li><span>03</span><svg aria-hidden="true" viewBox="0 0 48 48"><circle cx="21" cy="21" r="12"/><path d="m30 30 10 10M16 21l4 4 7-9"/></svg><h3>Query combinations</h3><p>Require all operations or match any, then print paths, JSON, CSV, or a static report.</p></li>
         </ol>
       </section>
 
       <section class="demo section" id="demo" aria-labelledby="demo-title">
-        <div class="demo-banner" role="status"><strong>Demo — sample data, nothing is saved</strong><span><button type="button" data-reset-demo>Reset demo</button><a href="#install">Start for real</a></span></div>
+        <div class="demo-banner" data-demo-banner hidden role="status"><strong>Demo — sample data, nothing is saved</strong><span><button type="button" data-reset-demo>Reset demo</button><a href="#install">View install options</a></span></div>
         <div class="section-heading"><p class="eyebrow">Browser sidecar demo</p><h2 id="demo-title" tabindex="-1">Search sample editing steps</h2><p>Paste XMP or choose local sidecars. Parsing stays in this tab; files are never uploaded.</p></div>
         <div class="demo-grid">
-          <div class="demo-input"><label for="sidecar-input">Sidecar XML</label><textarea id="sidecar-input" spellcheck="false" aria-describedby="demo-privacy"></textarea><div class="input-actions"><label class="button quiet file-label" for="sidecar-files">Choose sidecars</label><input id="sidecar-files" type="file" accept=".xmp,.dop,.pp3,text/xml" multiple /><button class="button quiet" type="button" data-reset-demo>Reset sample</button></div><p id="demo-privacy" class="micro">Files stay in browser memory and disappear when this tab closes.</p></div>
+          <div class="demo-input"><label for="sidecar-input">Sidecar data</label><textarea id="sidecar-input" spellcheck="false" aria-describedby="demo-privacy"></textarea><div class="input-actions"><label class="button quiet file-label" for="sidecar-files">Choose sidecars</label><input id="sidecar-files" type="file" accept=".xmp,.dop,.pp3,text/xml" multiple /><button class="button quiet" type="button" data-reset-demo>Reset sample</button></div><p id="demo-privacy" class="micro">Files stay in browser memory and disappear when this tab closes.</p></div>
           <div class="demo-output">
             <fieldset class="match-mode"><legend>Match rule</legend><label><input type="radio" name="match" value="all" checked /> All selected</label><label><input type="radio" name="match" value="any" /> Any selected</label></fieldset>
             <fieldset class="operation-filter"><legend>Active operations</legend><div data-operation-options></div></fieldset>
@@ -63,31 +75,31 @@
         <div class="section-heading"><p class="eyebrow">CLI reference</p><h2 id="docs-title">Use four commands</h2><p>Index an archive, find matching files, list operation names, or write an offline report.</p></div>
         <div class="docs-grid">
           <div class="command-tabs" role="tablist" aria-label="CLI examples"><button role="tab" aria-selected="true" aria-controls="cmd-index" id="tab-index">Index</button><button role="tab" aria-selected="false" aria-controls="cmd-find" id="tab-find" tabindex="-1">Find</button><button role="tab" aria-selected="false" aria-controls="cmd-report" id="tab-report" tabindex="-1">Report</button><button role="tab" aria-selected="false" aria-controls="cmd-json" id="tab-json" tabindex="-1">Automate</button></div>
-          <div class="terminal" id="cmd-index" role="tabpanel" aria-labelledby="tab-index"><div class="terminal-bar"><span>archive / bash</span><button type="button" data-copy="edit-trail index ~/Pictures">Copy</button></div><pre><code><i>$</i> edit-trail index ~/Pictures
-<span>Indexed 10,000 sidecars (9,998 parsed, 2 warnings)
+          <div class="terminal" id="cmd-index" role="tabpanel" aria-labelledby="tab-index"><div class="terminal-bar"><span>archive / bash</span><button type="button" data-copy="edit-trail index ~/Pictures">Copy command</button></div><pre><code><i>$</i> edit-trail index ~/Pictures
+<span>Indexed local sidecars; warnings are recorded
 → .edit-trail.json</span></code></pre></div>
-          <div class="terminal" id="cmd-find" role="tabpanel" aria-labelledby="tab-find" hidden><div class="terminal-bar"><span>query / bash</span><button type="button" data-copy="edit-trail find -o denoise -o crop --match all">Copy</button></div><pre><code><i>$</i> edit-trail find -o denoise -o crop --match all
-<span>MATCHES  247
+          <div class="terminal" id="cmd-find" role="tabpanel" aria-labelledby="tab-find" hidden><div class="terminal-bar"><span>query / bash</span><button type="button" data-copy="edit-trail find -o denoise -o crop --match all">Copy command</button></div><pre><code><i>$</i> edit-trail find -o denoise -o crop --match all
+<span>MATCHES
 /Archive/2026/night-market/DSC_1842.NEF
   darktable · crop, denoise, exposure</span></code></pre></div>
-          <div class="terminal" id="cmd-report" role="tabpanel" aria-labelledby="tab-report" hidden><div class="terminal-bar"><span>audit / bash</span><button type="button" data-copy="edit-trail report --output audit.html">Copy</button></div><pre><code><i>$</i> edit-trail report --output audit.html
-<span>Report with 10,000 records written to audit.html</span></code></pre></div>
-          <div class="terminal" id="cmd-json" role="tabpanel" aria-labelledby="tab-json" hidden><div class="terminal-bar"><span>pipeline / bash</span><button type="button" data-copy="edit-trail find -o masking --json | jq length">Copy</button></div><pre><code><i>$</i> edit-trail find -o masking --json | jq length
-<span>89</span></code></pre></div>
-          <aside class="docs-notes"><h3>Made for actual archives</h3><ul><li>Continues past malformed sidecars</li><li>Honours darktable history boundaries</li><li>Normalises common module aliases</li><li>Uses exit code 3 for no matches</li><li>Produces a self-contained offline report</li></ul><a href="https://github.com/B-Divyesh/sf-edit-trail-finder#usage">Read full CLI reference <span aria-hidden="true">→</span></a></aside>
+          <div class="terminal" id="cmd-report" role="tabpanel" aria-labelledby="tab-report" hidden><div class="terminal-bar"><span>audit / bash</span><button type="button" data-copy="edit-trail report --output audit.html">Copy command</button></div><pre><code><i>$</i> edit-trail report --output audit.html
+<span>Offline report written to audit.html</span></code></pre></div>
+          <div class="terminal" id="cmd-json" role="tabpanel" aria-labelledby="tab-json" hidden><div class="terminal-bar"><span>pipeline / bash</span><button type="button" data-copy="edit-trail find -o masking --json | jq length">Copy command</button></div><pre><code><i>$</i> edit-trail find -o masking --json | jq length
+<span>[...]</span></code></pre></div>
+          <div class="docs-notes"><h3>CLI behavior on large archives</h3><ul><li>Continues past malformed sidecars</li><li>Honours darktable history boundaries</li><li>Normalises common operation aliases</li><li>Uses exit code 3 for no matches</li><li>Produces a self-contained offline report</li></ul><a href="https://github.com/B-Divyesh/sf-edit-trail-finder#usage">Read full CLI reference <span aria-hidden="true">→</span></a></div>
         </div>
       </section>
 
       <section class="support section" id="recipes" aria-labelledby="recipes-title">
-        <div class="support-ticket"><div><p class="eyebrow">Free command recipes</p><h2 id="recipes-title">Download 12 archive audit recipes</h2><p>The recipe pack covers masking, crop, denoise, reports, CSV, JSON, and hidden sidecars. It is free with the CLI.</p><ul><li>12 copy-ready commands</li><li>No account or payment</li><li>Plain text for any terminal</li></ul></div><div class="price-block"><button class="button primary" type="button" data-download-recipes>Download audit recipes</button><p class="micro">The download is generated in your browser and contains commands only.</p></div></div>
-        <div class="pro-recipes"><h3>Two useful recipes</h3><div class="recipe-row"><code>edit-trail find -o masking --json</code><button type="button" data-copy="edit-trail find -o masking --json">Copy</button></div><div class="recipe-row"><code>edit-trail find -o denoise -o crop --match all --format csv</code><button type="button" data-copy="edit-trail find -o denoise -o crop --match all --format csv">Copy</button></div></div>
+        <div class="support-ticket"><div><p class="eyebrow">Free command recipes</p><h2 id="recipes-title">Download 12 archive audit recipes</h2><p>The recipe pack covers masking, crop, denoise, reports, CSV, JSON, and hidden sidecars. It is free with the CLI.</p><ul><li>12 copy-ready commands</li><li>No account needed</li><li>Plain text commands</li></ul></div><div class="price-block"><button class="button primary" type="button" data-download-recipes>Download audit recipes</button><p class="micro">The download is generated in your browser and contains commands only.</p></div></div>
+        <div class="pro-recipes"><h3>Example search recipes</h3><div class="recipe-row"><code>edit-trail find -o masking --json</code><button type="button" data-copy="edit-trail find -o masking --json">Copy command</button></div><div class="recipe-row"><code>edit-trail find -o denoise -o crop --match all --format csv</code><button type="button" data-copy="edit-trail find -o denoise -o crop --match all --format csv">Copy command</button></div></div>
       </section>
 
-      <section class="final-cta section" aria-labelledby="final-title"><p class="eyebrow">Install the CLI</p><h2 id="final-title">Search your own sidecars</h2><p>No catalogue migration or upload is required.</p><a class="button primary" href="#install">View install options <span aria-hidden="true">↑</span></a></section>
+      <section class="final-cta section" aria-labelledby="final-title"><p class="eyebrow">Install the CLI</p><h2 id="final-title">Search your own sidecars</h2><p>Choose a native download, or build from source with Rust.</p><div class="platform-downloads" aria-label="Native downloads"><a href="/downloads/edit-trail-linux-x86_64" download>Linux x64</a><a href="/downloads/edit-trail-macos-arm64" download>macOS Apple silicon</a><a href="/downloads/edit-trail-macos-x86_64" download>macOS Intel</a><a href="/downloads/edit-trail-windows-x86_64.exe" download>Windows x64</a></div></section>
     </main>
 
-    <footer><div class="brand"><svg aria-hidden="true" viewBox="0 0 42 42"><path d="M7 7h12v12H7zM23 7h12v12H23zM7 23h12v12H7z"/><path class="trail" d="M25 29h10m-5-5 5 5-5 5"/></svg><span>Edit Trail</span></div><p>Find photos by local editing steps. Version 0.1.0.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-edit-trail-finder">Source</a></nav></footer>
-    <div class="toast" data-toast role="status" aria-live="polite"></div>
+    <footer><div class="brand"><svg aria-hidden="true" viewBox="0 0 42 42"><path d="M7 7h12v12H7zM23 7h12v12H23zM7 23h12v12H7z"/><path class="trail" d="M25 29h10m-5-5 5 5-5 5"/></svg><span>Edit Trail</span></div><p>Find RAW photos by editing steps. v0.1.0 · Built by Param Factory.</p><nav aria-label="Legal"><a href="/demo/">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-edit-trail-finder">Source on GitHub</a></nav></footer>
+    <div class="toast" data-toast role="status" aria-live="polite"></div><div class="sr-only" data-route-announcement aria-live="polite"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

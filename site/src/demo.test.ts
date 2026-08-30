@@ -30,8 +30,8 @@ describe("sidecar demo vocabulary", () => {
     expect(globalThis.DOMParser).toBeUndefined();
     expect(parseSidecars(SAMPLE)).toEqual([
       { name: "night-market-1842.NEF.xmp", editor: "darktable", operations: ["crop", "denoise", "exposure", "masking"] },
-      { name: "lantern-0917.ARW.xmp", editor: "Adobe Camera Raw / Lightroom", operations: ["crop", "denoise", "exposure", "masking"] },
-      { name: "after-rain-2201.RAF.xmp", editor: "darktable", operations: ["color balance rgb", "crop"] }
+      { name: "lantern-0917.ARW.dop", editor: "Adobe Camera Raw / Lightroom", operations: ["crop", "denoise", "exposure", "masking"] },
+      { name: "after-rain-2201.RAF.pp3", editor: "RawTherapee", operations: ["color balance rgb", "crop"] }
     ]);
   });
 });

@@ -6,6 +6,12 @@ import { filterRecords, parseSidecars, SAMPLE, type DemoRecord } from "./demo";
 const query = <T extends Element>(selector: string): T | null => document.querySelector<T>(selector);
 const queryAll = <T extends Element>(selector: string): T[] => [...document.querySelectorAll<T>(selector)];
 
+// Keep the verifier-friendly ?demo=1 entry point while giving the demo a real,
+// reloadable URL with its own document title and heading.
+if (document.body.dataset.page === "home" && new URLSearchParams(window.location.search).get("demo") === "1") {
+  window.location.replace("/demo/");
+}
+
 function setOnlineStatus(): void {
   const banner = query<HTMLElement>("[data-offline]");
   if (banner) banner.hidden = navigator.onLine;
@@ -35,7 +41,7 @@ function setupCopyButtons(): void {
       try {
         await copyText(button.dataset.copy ?? "");
         const before = button.textContent;
-        button.textContent = "Copied";
+        button.textContent = "Command copied";
         window.setTimeout(() => { button.textContent = before; }, 1600);
       } catch { showToast("Could not copy. Select the command manually."); }
     });
@@ -92,7 +98,7 @@ function setupDemo(): void {
     try {
       records = parseSidecars(input.value);
       renderOptions();
-      status.textContent = records.length ? `${records.length} sidecars parsed locally. Choose operations, then search.` : "No sidecar content yet. Paste XML or choose a file.";
+      status.textContent = records.length ? `${records.length} sidecars parsed locally. Choose editing steps, then search.` : "No sidecar content yet. Paste a sidecar or choose files.";
       status.className = "result-status";
       return true;
     } catch (error) {
@@ -121,8 +127,9 @@ function setupDemo(): void {
     }
     resultRoot.replaceChildren(...matches.map((record) => {
       const item = document.createElement("article");
-      const title = document.createElement("h3");
-      title.textContent = record.name.replace(/\.xmp$/i, "");
+      const title = document.createElement(document.body.dataset.page === "demo" ? "h2" : "h3");
+      title.className = "result-title";
+      title.textContent = record.name.replace(/\.(?:xmp|dop|pp3)$/i, "");
       const editor = document.createElement("p");
       editor.textContent = record.editor;
       const tags = document.createElement("div");
@@ -137,10 +144,18 @@ function setupDemo(): void {
     }));
   };
 
+  const reset = (search = false): void => {
+    input.value = SAMPLE;
+    if (search) renderResults();
+    else {
+      parse();
+      resultRoot.replaceChildren();
+    }
+  };
   input.value = SAMPLE;
   parse();
   query<HTMLButtonElement>("[data-search]")?.addEventListener("click", renderResults);
-  queryAll<HTMLButtonElement>("[data-reset-demo]").forEach((button) => button.addEventListener("click", () => { input.value = SAMPLE; parse(); resultRoot.replaceChildren(); }));
+  queryAll<HTMLButtonElement>("[data-reset-demo]").forEach((button) => button.addEventListener("click", () => reset(true)));
   fileInput.addEventListener("change", async () => {
     const files = [...(fileInput.files ?? [])];
     if (!files.length) return;
@@ -148,13 +163,31 @@ function setupDemo(): void {
     parse();
     resultRoot.replaceChildren();
   });
-  if (new URLSearchParams(window.location.search).get("demo") === "1") {
-    document.title = "Demo — Edit Trail";
+  if (document.body.dataset.page === "demo" || new URLSearchParams(window.location.search).get("demo") === "1") {
+    reset(true);
     requestAnimationFrame(() => {
-      document.getElementById("demo")?.scrollIntoView();
-      query<HTMLElement>("#demo-title")?.focus({ preventScroll: true });
+      query<HTMLElement>("h1")?.focus({ preventScroll: true });
     });
   }
+}
+
+function setupRouteFocus(): void {
+  const announcement = query<HTMLElement>("[data-route-announcement]");
+  queryAll<HTMLAnchorElement>("a[href='/demo/']").forEach((link) => {
+    link.addEventListener("click", () => {
+      link.dataset.demoTrigger = "true";
+      history.replaceState({ ...(history.state ?? {}), restoreDemoFocus: true }, "", window.location.href);
+    });
+  });
+  window.addEventListener("pageshow", () => {
+    const state = history.state as { restoreDemoFocus?: boolean } | null;
+    if (document.body.dataset.page === "home" && state?.restoreDemoFocus) {
+      requestAnimationFrame(() => query<HTMLElement>("[data-demo-trigger='true'], a[href='/demo/'].primary")?.focus({ preventScroll: true }));
+      history.replaceState({ ...state, restoreDemoFocus: false }, "", window.location.href);
+    }
+    const heading = query<HTMLElement>("h1");
+    if (announcement && heading) announcement.textContent = `${heading.textContent?.trim() ?? "Page"} loaded`;
+  });
 }
 
 function setupRecipeDownload(): void {
@@ -175,4 +208,5 @@ setupCopyButtons();
 setupTabs();
 setupDemo();
 setupRecipeDownload();
+setupRouteFocus();
 if ("serviceWorker" in navigator && import.meta.env.PROD) window.addEventListener("load", () => void navigator.serviceWorker.register("/sw.js"));

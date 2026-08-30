@@ -1,78 +1,62 @@
-# Edit Trail — polish round 2 handoff
+# Edit Trail — independent verification 7 handoff
 
-## Status: complete
+## Status: FAIL
 
-All findings in `.factory/review-1.md` and `.factory/review-2.md` are
-resolved. Product changes were pushed through commit
-`1c911db63a97c8af3378df78032b22efed4c4197` and deployed to
-<https://edit-trail-finder.sociobot.in> as deployment
-`72703bbf-fa08-4b51-9099-8061ca069cb0`.
+Candidate `a463f65259ca878069bc4589611eb2674a5f86eb` was independently
+verified against <https://edit-trail-finder.sociobot.in> on 30 August 2026.
+The live deployment matches the candidate and all declared tests pass, but a
+release-blocking product and claim defect remains.
 
-## What changed
+## Release blocker
 
-- Made the isolated one-click demo fully resettable. Reset now restores its
-  bundled XMP/DOP/PP3 input, file picker, match rule, selected operations,
-  status, and two initial result records.
-- Removed the unproved “247” count and rewrote every flagged heading or phrase
-  in plain words without changing the sidecar-night-market design.
-- Expanded `.factory/claims.json` from 13 to 16 claims. New executable tests
-  prove the default index path, deletion behavior, exact folder-opener target,
-  and static deployment artifact.
-- Strengthened recipe and index-schema claims. Tests now cover all documented
-  recipe lines and every named index field, including timestamps.
-- Added `scripts/copy-audit.mjs`; `npm test` fails if the generated copy
-  audit is stale, contains banned language, or exceeds 22 words.
-- Kept real route titles, metadata, 404 behavior, shared legal navigation,
-  focus restoration, offline support, and four native downloads under
-  regression coverage.
-- Updated the catalog line to: “Find RAW photos by active editing steps stored
-  in local XMP, DOP, and PP3 sidecars.”
+The CLI silently accepts empty and arbitrary-text `.pp3` files as successfully
+parsed RawTherapee records with no operations and no warnings. This contradicts
+the landing-page and README promise that malformed sidecars become warnings.
+It can hide edit metadata without telling the photographer.
 
-The full finding matrix is in `.factory/polish-2.md`.
-
-## Verification evidence
-
-From clean clone `/tmp/edit-trail-polish2-final.X4GCNr/repo`:
-
-- Every exact command for all 16 entries in `.factory/claims.json`: passed.
-- `npm test`: 5 Rust unit, 3 CLI integration, 1 doctest, 9 Vitest, and 44
-  Playwright runs passed; 6 host-only CLI duplicates skipped on mobile.
-- `npx tsc --noEmit`: passed.
-- `cargo fmt --check`: passed.
-- `cargo clippy --all-targets -- -D warnings`: passed.
-- `cargo package --allow-dirty`: passed; 13 files, 63.8 KiB unpacked.
-- Production build: 15.33 KB JavaScript and 19.08 KB CSS before gzip.
-
-Live:
-
-- `/opt/fleet/lib/verify-url.sh`: 200, correct title/lang, one h1, one main,
-  complete alt text, named buttons, and zero console errors.
-- `node scripts/verify-live.mjs`: 79 checks passed, with zero console errors,
-  zero third-party requests, and zero axe WCAG 2 A/AA violations.
-- Routes `/`, `/demo/`, `/privacy/`, and `/terms/` returned their own
-  documents; an unknown route returned the designed HTTP 404.
-- Root and demo SHA-256 matched the deployed files:
-  `ffb833e5d88865b9c5e5398b8b9039cfcf7b3b1e88b0ac653f4c0b92baa407df`
-  and
-  `6ec90504e4e0258b539e314e7d82672a00a78d9321abb827f86311ee2a8740c3`.
-- Lighthouse 13.0.1: performance 100, accessibility 100, best practices 100,
-  SEO 100; FCP 1.1 s, LCP 1.4 s, CLS 0.033, total blocking time 0 ms.
-- Screenshots and machine-readable reports are in
-  `.factory/evidence/polish-2-live/`.
-
-## Run and deploy
+Reproduction:
 
 ```sh
-npm ci
-npm test
-npx tsc --noEmit
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
-cargo package --allow-dirty
-npm run build
-/opt/fleet/lib/deploy-static.sh edit-trail-finder dist/site
+mkdir archive
+touch archive/empty.pp3
+cp README.md archive/not-a-sidecar.pp3
+edit-trail index archive --output index.json --json
 ```
 
-## Known gaps
+Observed: `sidecars: 2`, `parsed: 2`, `warnings: 0`. Both record warning lists
+are empty. The `local-sidecar-search` claim test includes malformed XML but no
+malformed PP3 fixture, so it does not prove the broader public promise.
 
-None.
+Required next step: validate PP3 structure in the CLI, report invalid or empty
+PP3 input as a parse warning while continuing the scan, and add invalid PP3 to
+the claim test. Then rerun every command in `.factory/claims.json` and the full
+verification suite.
+
+## What was verified
+
+- All 16 exact claim commands passed after `npm ci`.
+- `npm test`, `npx tsc --noEmit`, `cargo fmt --check`,
+  `cargo clippy --all-targets -- -D warnings`, `npm run build`, and
+  `cargo package --allow-dirty` passed.
+- The packed crate installed into a clean temporary consumer. Help, version,
+  demo, index, operations, JSON and CSV find, report, and documented exit
+  codes worked.
+- The first screen clearly states what the product does, who it serves, and
+  the one-click sample action. The demo opens with 2 of 3 matches.
+- A 10,000-sidecar archive indexed in 0.218 seconds; all 6,667 crop and denoise
+  matches were returned in 0.034 seconds.
+- Live Playwright verification passed 79 checks with no console errors,
+  external requests, or axe violations. Keyboard, focus, 390px layout,
+  reduced motion, invalid-input recovery, and offline service-worker reload
+  passed.
+- Lighthouse mobile scored 94/100/100/100 for performance, accessibility,
+  best practices, and SEO. LCP was 1.50 s and CLS 0.033. Desktop scored 100
+  throughout.
+- Live headers and caching are correct. Eight representative deployed files,
+  including all route documents, JS, CSS, service worker, and Linux binary,
+  matched the candidate build byte-for-byte.
+- This is a static product with no server API or sign-in, so 429 allowance and
+  Entra checks are not applicable.
+
+No product code was modified during verification. Full evidence, hashes,
+commands, and the severity matrix are in `.factory/verification-7.md`.

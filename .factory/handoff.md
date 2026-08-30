@@ -32,7 +32,7 @@ The full finding matrix is in `.factory/polish-2.md`.
 
 ## Verification evidence
 
-From clean clone `/tmp/edit-trail-polish2.DD7nD5/repo`:
+From clean clone `/tmp/edit-trail-polish2-final.X4GCNr/repo`:
 
 - Every exact command for all 16 entries in `.factory/claims.json`: passed.
 - `npm test`: 5 Rust unit, 3 CLI integration, 1 doctest, 9 Vitest, and 44

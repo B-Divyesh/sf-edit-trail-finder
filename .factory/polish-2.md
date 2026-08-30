@@ -72,7 +72,7 @@ Evidence shortcuts used below:
 
 ## Verification
 
-A clean clone at `/tmp/edit-trail-polish2.DD7nD5/repo` ran every exact
+A clean clone at `/tmp/edit-trail-polish2-final.X4GCNr/repo` ran every exact
 command in `.factory/claims.json`; all 16 passed independently. The same
 clone then passed `npm test`, TypeScript, Rust formatting, Clippy with
 warnings denied, and `cargo package --allow-dirty`.
@@ -88,4 +88,3 @@ privacy, offline reloads, mobile overflow, CSP, and all review-specific copy.
 Playwright axe found zero WCAG 2 A/AA violations. Lighthouse scored 100 for
 performance, accessibility, best practices, and SEO; LCP was 1.4 s, CLS 0.033,
 and total blocking time 0 ms.
-

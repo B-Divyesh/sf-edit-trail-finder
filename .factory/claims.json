@@ -108,7 +108,7 @@
     "id": "deployment-artifact",
     "claim": "npm run build creates dist/site with the static site, release CLI, response headers, download headers, and asset caching configuration.",
     "where": "README develop and deployment sections",
-    "test": "npm run build:site && npm run test:unit -- --grep @claim:deployment-artifact",
+    "test": "npm run build:site && npm run test:unit -- --testNamePattern @claim:deployment-artifact",
     "sandbox": "clean build; inspect dist/site HTML, executable signature, CSP, download headers, and immutable asset cache rules"
   }
 ]

@@ -76,7 +76,7 @@ describe("Azure Static Web Apps response policy", () => {
     expect(new Set(claims.map(({ id }) => id)).size).toBe(claims.length);
     for (const claim of claims) {
       const tag = `@claim:${claim.id}`;
-      expect(claim.test).toContain(`--grep ${tag}`);
+      expect(claim.test).toContain(tag);
       expect(testSources.split(tag)).toHaveLength(2);
     }
   });

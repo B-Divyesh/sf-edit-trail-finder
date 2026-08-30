@@ -32,7 +32,7 @@ deployment `24cbbb2d-1bfe-448a-a0a5-a898448b519c` to
   1 doctest, 7 Vitest, 41 Playwright passes; 3 intentional duplicate CLI
   mobile skips).
 - Each command in `.factory/claims.json` was run independently in that clean
-  clone. All 11 claims passed.
+  clone. All 12 claims passed.
 - Local package check: `cargo package --allow-dirty` created
   `target/package/edit-trail-0.1.0.crate`.
 - Production cold check: `/opt/fleet/lib/verify-url.sh` passed with 679 ms

@@ -13,7 +13,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "test": "cargo test && npm run copy:audit:check && npm run test:unit && npm run build:site && npm run test:e2e",
-    "preview": "vite preview"
+    "preview": "node scripts/preview-site.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",

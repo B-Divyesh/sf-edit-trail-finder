@@ -14,8 +14,9 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["iPhone 13"], browserName: "chromium", viewport: { width: 390, height: 844 } } }
   ],
   webServer: {
-    command: "npm run preview -- --host 127.0.0.1 --port 4173",
+    command: "node scripts/preview-site.mjs --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173",
-    reuseExistingServer: false
+    reuseExistingServer: false,
+    gracefulShutdown: { signal: "SIGTERM", timeout: 5_000 }
   }
 });

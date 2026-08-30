@@ -142,12 +142,19 @@ test("@claim:cross-platform-downloads exposes executable bytes for every named p
     ["/downloads/edit-trail-macos-arm64", [0xcf, 0xfa, 0xed, 0xfe]],
     ["/downloads/edit-trail-macos-x86_64", [0xcf, 0xfa, 0xed, 0xfe]],
     ["/downloads/edit-trail-windows-x86_64.exe", [0x4d, 0x5a]]
-  ];
-  for (const [path, signature] of expected) {
+  ] as const;
+  const downloads = await Promise.all(expected.map(async ([path, signature]) => {
     const response = await request.get(path as string);
+    return { path, signature, response, bytes: await response.body() };
+  }));
+  for (const { path, signature, response, bytes } of downloads) {
     expect(response.ok()).toBe(true);
-    expect([... (await response.body()).subarray(0, (signature as number[]).length)]).toEqual(signature);
+    expect(response.headers()["content-disposition"]).toBe(`attachment; filename=${path.slice("/downloads/".length)}`);
+    expect([...bytes.subarray(0, signature.length)]).toEqual([...signature]);
   }
+  const lifetimeProbe = await request.get("/");
+  expect(lifetimeProbe.ok()).toBe(true);
+  expect(await lifetimeProbe.text()).toContain("Find RAW photos by editing steps");
 });
 
 test("@claim:recipe-download audit recipes download without an account", async ({ page }) => {

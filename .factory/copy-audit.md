@@ -73,8 +73,8 @@ differs or a sentence exceeds 22 words.
 | 2 | sidecar families |
 | 1 | 0 |
 | 2 | pixels indexed |
+| 1 | EXPORTS |
 | 1 | JSON |
-| 2 | exports JSON |
 | 6 | Index editing steps in three commands |
 | 1 | 01 |
 | 2 | Scan sidecars |

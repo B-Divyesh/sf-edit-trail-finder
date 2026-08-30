@@ -1,3 +1,31 @@
+# Edit Trail — adversarial review 2 handoff
+
+## Status: FAIL
+
+Reviewed commit `48ce9e022ef716e1e3123cc39df9443811e7b0eb` against the
+live deployment on 30 August 2026. Product code was not changed. The complete
+report is `.factory/review-2.md`.
+
+The cold mobile and desktop first read passed, the one-click demo immediately
+showed two realistic results, every registered claim command passed from a
+fresh no-local clone, the complete `npm test` gate passed, live offline and
+same-origin checks passed, all crawled links resolved, and axe reported no
+violations. The CLI demo also produced three sidecars and two matches in a new
+temporary directory and rejected directory reuse.
+
+The review found four blockers: reset does not restore changed demo controls
+or results; the unproved hero count `247` remains from F-1-19; the default
+`.edit-trail.json` behavior remains visible without a claim from F-1-23; and
+the downloaded recipe still advertises untested `--open` behavior from
+F-1-25. Seven additional claim/copy-audit findings are detailed in the report.
+
+Verification evidence is under `/tmp/edit-trail-review2-*` and the clean clone
+is `/tmp/edit-trail-review2.rScy3A/repo`. Re-run the registered commands from
+`.factory/claims.json`, `npm test`, and the live Playwright flows described in
+the report after repair.
+
+---
+
 # Edit Trail — verification 6 handoff
 
 ## Status: PASS

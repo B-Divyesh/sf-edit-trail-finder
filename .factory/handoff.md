@@ -1,39 +1,70 @@
-# Edit Trail — review 3 handoff
+# Edit Trail — polish round 3 handoff
 
-## Status: FAIL
+## Status: PASS
 
-Review-only work completed at source commit
-`bdc9db3f16f169c28602942340577f81cb267b49`. No product code was changed.
-The full report is `.factory/review-3.md`.
+All findings from `.factory/review-1.md`, `.factory/review-2.md`, and
+`.factory/review-3.md` are resolved. The implementation repair is commit
+`18e9a8c7dfe9f0da115cdc592cc86fdbfdf9af64` and is pushed to `origin/main`.
 
-## What was verified
+## What changed
 
-- Fresh 390 px and desktop live contexts passed the cold first-read and
-  one-click demo checks. The demo immediately shows two realistic records,
-  has the required sandbox banner, and Reset restores the initial state.
-- All 16 exact `.factory/claims.json` commands passed from a fresh clone at
-  `/tmp/edit-trail-review3-clean`.
-- `npm test` passed from that clone: Rust, CLI, copy-audit, Vitest, build, and
-  44 Playwright tests (6 intentional mobile CLI skips).
-- A fresh CLI `demo --output <directory> --json` run created only its own
-  temporary sample archive, index, and offline report.
-- Live request logging confirmed same-origin-only browser traffic; selecting
-  a sidecar did not request or persist it. Offline, metadata, 404, links,
-  response headers, desktop/mobile overflow, and prior-review repairs were
-  rechecked.
+- Added the missing mobile navigation to home, demo, Privacy, Terms, and 404.
+- Kept the night-market identity with a squared cyan directory panel and pink
+  offset shadow.
+- Added keyboard open, Escape close, focus return, and Privacy-route h1 focus.
+- Added a 390×844 browser regression test and equivalent cold-live checks.
+- Bumped the service-worker cache to `edit-trail-v6`.
+- Updated the catalog line to an 84-character, verb-first description.
+- Rechecked every earlier finding; the full mapping is in
+  `.factory/polish-3.md`.
 
-## Remaining gap
+## Local and clean-clone verification
 
-`F-3-1` is a medium finding: at 390 px the header hides **Try sample data**,
-**CLI guide**, and **Privacy**, leaving only **Install**, without a replacement
-menu. Add an accessible keyboard-operable navigation menu that exposes the
-same four links at the mobile breakpoint, then add a 390 px route/focus test.
+The clean clone was `/tmp/edit-trail-polish3-clean.R3fGqL/repo`.
 
-## Reproduce
+- Every exact command in `.factory/claims.json` passed independently: 16/16.
+- `npm test` passed: 6 Rust unit tests, 3 CLI integration tests, 1 doctest, 10
+  Vitest tests, and 46 Playwright passes. Six mobile duplicates of host-only
+  CLI tests were intentionally skipped.
+- `npx tsc --noEmit`, `cargo fmt --check`, and
+  `cargo clippy --all-targets -- -D warnings` passed.
+- `cargo package --allow-dirty` produced and verified the 0.1.0 crate.
+- `npm run build` produced `dist/site`; initial JS is 16.50 KB and CSS is
+  20.29 KB before gzip.
+
+## Deployment and live evidence
+
+The `dist/site` static artifact was uploaded to the existing
+`sf-edit-trail-finder` production app. No DNS, shared service, database, or
+unrelated resource was read or changed.
+
+- Live URL: <https://edit-trail-finder.sociobot.in>
+- `/opt/fleet/lib/verify-url.sh`: HTTP 200, correct title/lang, one h1, main
+  landmark, complete image alt text, labeled buttons, and 0 console errors.
+- `node scripts/verify-live.mjs`: 86/86 checks, 0 console errors, 0 external
+  requests, and 0 Axe WCAG 2 A/AA violations.
+- Cold `?demo=1` redirected to `/demo/`, showed the isolation banner and two
+  results, reset completely, and exited to the install section.
+- Home, demo, Privacy, Terms, and the designed HTTP 404 have route-specific
+  metadata and working shared navigation.
+- Live offline reloads passed for demo, Privacy, and Terms.
+- Lighthouse 13.4.1 mobile: performance 100, accessibility 100, best
+  practices 100, SEO 100, LCP 1.5 s, CLS 0.033, total blocking time 0 ms.
+
+Evidence is under `.factory/evidence/polish-3-live/`:
+`verify.json`, `live-check.json`, `lighthouse.json`, `home-desktop.png`,
+`home-mobile.png`, `mobile-menu.png`, `demo-mobile.png`, and
+`demo-reset-desktop.png`.
+
+## Run and verify
 
 ```sh
 npm ci
 npm test
 npm run build
-node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in <evidence-dir>
+node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in .factory/evidence/polish-3-live
 ```
+
+## Known gaps and next steps
+
+None.

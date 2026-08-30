@@ -123,6 +123,7 @@ try {
   for (const name of ["Try sample data", "CLI guide", "Privacy", "Install"]) {
     check(await mobileNavigation.getByRole("link", { name, exact: true }).isVisible(), `mobile menu exposes ${name}`);
   }
+  await page.screenshot({ path: resolve(evidence, "mobile-menu.png"), fullPage: false });
   await page.keyboard.press("Escape");
   check(await menuToggle.getAttribute("aria-expanded") === "false" && await menuToggle.evaluate((element) => element === document.activeElement), "Escape closes the mobile menu and returns focus");
   await page.keyboard.press(" ");

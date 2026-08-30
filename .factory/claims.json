@@ -22,7 +22,7 @@
   },
   {
     "id": "recipe-download",
-    "claim": "The free audit recipe pack downloads 12 plain-text commands without an account.",
+    "claim": "The free audit recipe pack downloads 12 plain-text commands, including a crop-and-denoise search, without an account.",
     "where": "landing page recipe section",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:recipe-download",
     "sandbox": "fresh browser context; assert generated text download contains a documented combination query"
@@ -57,7 +57,7 @@
   },
   {
     "id": "local-sidecar-search",
-    "claim": "The CLI indexes XMP, representative DxO PhotoLab DOP, and PP3 sidecars, normalises aliases and history boundaries, records malformed files, and does not read image pixels.",
+    "claim": "The CLI indexes XMP, representative DxO PhotoLab DOP, and PP3 sidecars; its index records paths, timestamps, editors, operations, and warnings without image pixels.",
     "where": "landing page facts, how-it-works section, and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:local-sidecar-search",
     "sandbox": "temporary archive with XMP and PP3 data, the bundled DxO PhotoLab DOP fixture, malformed XML, and a RAW marker; assert active/inactive corrections, warnings, matches, and marker absence"
@@ -89,5 +89,26 @@
     "where": "landing-page first-screen facts and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:mit-license",
     "sandbox": "production site and shipped repository license; assert visible MIT fact and MIT license text"
+  },
+  {
+    "id": "default-index-path",
+    "claim": "By default, index writes .edit-trail.json in the current directory, and deleting it removes that reusable index.",
+    "where": "landing CLI output, privacy page, and README",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:default-index-path",
+    "sandbox": "fresh temporary working directory; index and find without path overrides; delete the index and assert later find fails"
+  },
+  {
+    "id": "open-folder",
+    "claim": "With --open and one match, the CLI asks the operating system to open the matching source folder.",
+    "where": "downloaded audit recipe and CLI help",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:open-folder",
+    "sandbox": "fresh CLI demo; prepend a fake xdg-open executable; assert its only argument is the exact matching source folder"
+  },
+  {
+    "id": "deployment-artifact",
+    "claim": "npm run build creates dist/site with the static site, release CLI, response headers, download headers, and asset caching configuration.",
+    "where": "README develop and deployment sections",
+    "test": "npm run build:site && npm run test:unit -- --grep @claim:deployment-artifact",
+    "sandbox": "clean build; inspect dist/site HTML, executable signature, CSP, download headers, and immutable asset cache rules"
   }
 ]

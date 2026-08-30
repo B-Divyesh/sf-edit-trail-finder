@@ -80,8 +80,8 @@ function setupDemo(): void {
   if (!input || !fileInput || !optionRoot || !resultRoot || !status) return;
   let records: DemoRecord[] = [];
 
-  const renderOptions = (): void => {
-    const previous = new Set(queryAll<HTMLInputElement>("[data-operation-options] input:checked").map((item) => item.value));
+  const renderOptions = (selectedOperations?: ReadonlySet<string>): void => {
+    const previous = selectedOperations ?? new Set(queryAll<HTMLInputElement>("[data-operation-options] input:checked").map((item) => item.value));
     const operations = [...new Set(records.flatMap((record) => record.operations))].sort();
     optionRoot.replaceChildren(...operations.map((operation) => {
       const label = document.createElement("label");
@@ -94,10 +94,10 @@ function setupDemo(): void {
     }));
   };
 
-  const parse = (): boolean => {
+  const parse = (selectedOperations?: ReadonlySet<string>): boolean => {
     try {
       records = parseSidecars(input.value);
-      renderOptions();
+      renderOptions(selectedOperations);
       status.textContent = records.length ? `${records.length} sidecars parsed locally. Choose editing steps, then search.` : "No sidecar content yet. Paste a sidecar or choose files.";
       status.className = "result-status";
       return true;
@@ -146,9 +146,16 @@ function setupDemo(): void {
 
   const reset = (search = false): void => {
     input.value = SAMPLE;
-    if (search) renderResults();
+    fileInput.value = "";
+    query<HTMLInputElement>("input[name=match][value=all]")!.checked = true;
+    query<HTMLInputElement>("input[name=match][value=any]")!.checked = false;
+    const defaults = new Set(["crop", "denoise"]);
+    if (search) {
+      if (!parse(defaults)) return;
+      renderResults();
+    }
     else {
-      parse();
+      parse(defaults);
       resultRoot.replaceChildren();
     }
   };

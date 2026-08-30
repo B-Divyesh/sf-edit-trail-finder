@@ -67,7 +67,8 @@ invalid usage. A `find` query with no matches returns `3`.
 
 Malformed sidecars become warnings, so one file does not stop an archive scan.
 The index contains paths, timestamps, editor families, active editing steps,
-and warnings. It does not contain image bytes.
+and warnings. It does not contain image bytes. By default, the CLI writes
+`.edit-trail.json` in the current directory.
 
 ## Develop and verify
 
@@ -79,14 +80,14 @@ npm test
 npm run build
 ```
 
-`npm run build` compiles the release binary and documentation site. Run
+`npm run build` creates the static site and release CLI in `dist/site`. Run
 `cargo package --allow-dirty` to check package readiness. The factory owns
 publishing credentials; this repository does not publish.
 
 ## Deployment
 
-The factory deploys `dist/site` to Azure Static Web Apps. The deployment
-configuration sets security headers, download headers, and asset caching.
+Deploy `dist/site` as the static site. Its checked-in configuration defines
+security headers, download headers, and asset caching.
 
 ## License
 

@@ -40,12 +40,16 @@ describe("Azure Static Web Apps response policy", () => {
     ]));
   });
 
-  it("makes the work-order site build create and validate the CLI download", async () => {
+  it("@claim:deployment-artifact creates the documented static deployment artifact", async () => {
     const packageJson = JSON.parse(await readFile(resolve("package.json"), "utf8")) as { scripts: Record<string, string> };
     expect(packageJson.scripts["build:site"]).toContain("npm run build:cli");
     expect(packageJson.scripts["build:site"]).toContain("verify-deploy-artifacts.mjs");
     const verifier = await readFile(resolve("scripts/verify-deploy-artifacts.mjs"), "utf8");
     expect(verifier).toContain("0x7f, 0x45, 0x4c, 0x46");
+    expect((await readFile(resolve("site/index.html"), "utf8"))).toContain("Edit Trail");
+    const sourceConfig = JSON.parse(await readFile(resolve("site/public/staticwebapp.config.json"), "utf8"));
+    expect(sourceConfig.globalHeaders["Content-Security-Policy"]).toBe(csp);
+    expect(sourceConfig.routes.some((route: { headers?: Record<string, string> }) => route.headers?.["Cache-Control"] === immutable)).toBe(true);
   });
 
   it("does not expose unregistered checkout or shared verification endpoints", async () => {
@@ -60,5 +64,20 @@ describe("Azure Static Web Apps response policy", () => {
     expect(combined).not.toContain("api.sociobot.in");
     expect(combined).not.toMatch(/checkout|\/verify\?license|sb_license:/i);
     expect(combined).toContain("Download audit recipes");
+  });
+
+  it("keeps every registered claim mapped to exactly one tagged test", async () => {
+    const claims = JSON.parse(await readFile(resolve(".factory/claims.json"), "utf8")) as { id: string; test: string }[];
+    const testSources = (await Promise.all([
+      "site/src/demo.test.ts",
+      "site/src/response-policy.test.ts",
+      "tests/site/site.spec.ts"
+    ].map((path) => readFile(resolve(path), "utf8")))).join("\n");
+    expect(new Set(claims.map(({ id }) => id)).size).toBe(claims.length);
+    for (const claim of claims) {
+      const tag = `@claim:${claim.id}`;
+      expect(claim.test).toContain(`--grep ${tag}`);
+      expect(testSources.split(tag)).toHaveLength(2);
+    }
   });
 });

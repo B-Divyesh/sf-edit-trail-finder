@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -10,6 +10,7 @@ const productionCsp = "default-src 'self'; img-src 'self' blob: data:; script-sr
 test("@claim:sample-demo hero opens an isolated sample with visible results in one click", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
+  await page.addInitScript(() => localStorage.setItem("real:test-sentinel", "keep"));
   await page.goto("/");
   await expect(page).toHaveTitle(/Edit Trail/);
   await expect(page.locator("h1")).toHaveCount(1);
@@ -23,6 +24,26 @@ test("@claim:sample-demo hero opens an isolated sample with visible results in o
   await expect(page.locator("[data-demo-results] article")).toHaveCount(2);
   await expect(page.locator("[data-demo-results]")).toContainText("night-market-1842.NEF");
   await expect(page.locator("[data-demo-results]")).toContainText("lantern-0917.ARW");
+
+  await page.locator("#sidecar-files").setInputFiles({
+    name: "changed.xmp",
+    mimeType: "text/xml",
+    buffer: Buffer.from('<sidecar><module operation="masking" enabled="true" /></sidecar>')
+  });
+  await page.getByLabel("Any selected").check();
+  await page.getByRole("button", { name: "Find matching files" }).click();
+  await expect(page.locator("[data-demo-results] article")).toHaveCount(1);
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await expect(page.getByLabel("All selected")).toBeChecked();
+  await expect(page.getByLabel("Any selected")).not.toBeChecked();
+  await expect(page.locator("[data-operation-options] input:checked")).toHaveCount(2);
+  await expect(page.getByLabel("crop", { exact: true })).toBeChecked();
+  await expect(page.getByLabel("denoise", { exact: true })).toBeChecked();
+  await expect(page.locator("#sidecar-files")).toHaveValue("");
+  await expect(page.locator("#sidecar-input")).toHaveValue(/night-market-1842\.NEF\.xmp/);
+  await expect(page.locator("[data-demo-status]")).toContainText("2 of 3 sidecars match all selected operations");
+  await expect(page.locator("[data-demo-results] article")).toHaveCount(2);
+  expect(await page.evaluate(() => localStorage.getItem("real:test-sentinel"))).toBe("keep");
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
   expect(consoleErrors).toEqual([]);
@@ -32,6 +53,7 @@ test("demo query entry redirects to the real sandbox route and its exit discards
   await page.goto("/?demo=1");
   await expect(page).toHaveURL(/\/demo\/$/);
   await expect(page.getByText("Demo — sample data, nothing is saved")).toBeVisible();
+  await expect(page.locator("[data-demo-results] article")).toHaveCount(2);
   await page.getByRole("link", { name: "View install options" }).click();
   await expect(page).toHaveURL(/\/#install$/);
   await expect(page.getByText("Demo — sample data, nothing is saved")).toBeHidden();
@@ -136,8 +158,16 @@ test("@claim:recipe-download audit recipes download without an account", async (
   expect(download.suggestedFilename()).toBe("edit-trail-audit-recipes.txt");
   const path = await download.path();
   const recipes = readFileSync(path!, "utf8");
-  expect(recipes).toContain("edit-trail find -o denoise -o crop --match all");
-  expect(recipes.split("\n").filter((line) => line.startsWith("edit-trail "))).toHaveLength(12);
+  const commands = recipes.split("\n").filter((line) => line.startsWith("edit-trail "));
+  expect(commands).toHaveLength(12);
+  expect(commands).toEqual(expect.arrayContaining([
+    "edit-trail find -o masking --json",
+    "edit-trail find -o crop --format csv",
+    "edit-trail find -o denoise -o crop --match all",
+    "edit-trail report --output full-audit.html",
+    "edit-trail index ~/Pictures --include-hidden",
+    "edit-trail find -o denoise --limit 1 --open"
+  ]));
 });
 
 test("legal pages render and mobile layout does not overflow", async ({ page }) => {
@@ -316,7 +346,17 @@ test("@claim:local-sidecar-search CLI indexes supported sidecars without reading
     const indexed = readFileSync(index, "utf8");
     expect(indexed).not.toContain("PRIVATE_PIXEL_MARKER");
     const parsedIndex = JSON.parse(indexed);
+    expect(parsedIndex.root).toBe(work);
     expect(parsedIndex.sidecars_seen).toBe(4);
+    expect(parsedIndex.scan_warnings).toEqual([]);
+    for (const record of parsedIndex.records) {
+      expect(record.sidecar).toEqual(expect.any(String));
+      expect(record.source_image).toEqual(expect.any(String));
+      expect(record.modified_unix).toEqual(expect.any(Number));
+      expect(record.editor).toEqual(expect.any(String));
+      expect(record.operations).toEqual(expect.any(Array));
+      if (record.warnings !== undefined) expect(record.warnings).toEqual(expect.any(Array));
+    }
     expect(parsedIndex.records.find((record: { sidecar: string }) => record.sidecar.endsWith("broken.xmp")).warnings).toHaveLength(1);
     const darktable = parsedIndex.records.find((record: { sidecar: string }) => record.sidecar.endsWith("darktable.NEF.xmp"));
     expect(darktable.operations).toEqual(expect.arrayContaining([
@@ -337,6 +377,55 @@ test("@claim:local-sidecar-search CLI indexes supported sidecars without reading
     expect(statSync(binary).size).toBeGreaterThan(100_000);
   } finally {
     rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("@claim:default-index-path default index works from and can be removed from a fresh directory", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "One CLI sandbox run is sufficient");
+  const work = mkdtempSync(join(tmpdir(), "edit-trail-default-index-"));
+  const archive = join(work, "archive");
+  try {
+    cpSync(resolve("examples/sample-archive"), archive, { recursive: true });
+    const binary = resolve("target/release/edit-trail");
+    const indexed = spawnSync(binary, ["index", archive], { cwd: work, encoding: "utf8" });
+    expect(indexed.status, indexed.stderr).toBe(0);
+    const defaultIndex = join(work, ".edit-trail.json");
+    expect(existsSync(defaultIndex)).toBe(true);
+    const found = spawnSync(binary, ["find", "-o", "crop", "--json"], { cwd: work, encoding: "utf8" });
+    expect(found.status, found.stderr).toBe(0);
+    expect(JSON.parse(found.stdout)).toHaveLength(3);
+    unlinkSync(defaultIndex);
+    const afterDelete = spawnSync(binary, ["find", "-o", "crop", "--json"], { cwd: work, encoding: "utf8" });
+    expect(afterDelete.status).toBe(1);
+    expect(afterDelete.stderr).toContain("could not read .edit-trail.json");
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("@claim:open-folder --open sends the matching source folder to the operating-system opener", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "The Linux opener sandbox runs once");
+  const parent = mkdtempSync(join(tmpdir(), "edit-trail-opener-"));
+  const workspace = join(parent, "demo");
+  try {
+    const binary = resolve("target/release/edit-trail");
+    const demo = spawnSync(binary, ["demo", "--output", workspace, "--json"], { encoding: "utf8" });
+    expect(demo.status, demo.stderr).toBe(0);
+    const summary = JSON.parse(demo.stdout);
+    const openerDirectory = join(parent, "bin");
+    mkdirSync(openerDirectory);
+    const opener = join(openerDirectory, "xdg-open");
+    const log = join(parent, "opened-path.txt");
+    writeFileSync(opener, "#!/bin/sh\nprintf '%s' \"$1\" > \"$EDIT_TRAIL_OPEN_LOG\"\n");
+    chmodSync(opener, 0o755);
+    const opened = spawnSync(binary, ["find", "-o", "denoise", "--limit", "1", "--open", "--index", summary.index], {
+      encoding: "utf8",
+      env: { ...process.env, PATH: `${openerDirectory}:${process.env.PATH ?? ""}`, EDIT_TRAIL_OPEN_LOG: log }
+    });
+    expect(opened.status, opened.stderr).toBe(0);
+    expect(readFileSync(log, "utf8")).toBe(resolve(workspace, "sample-archive"));
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
   }
 });
 

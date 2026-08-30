@@ -177,7 +177,7 @@ pub fn parse_sidecar(path: &Path) -> io::Result<SidecarRecord> {
         .and_then(|value| value.to_str())
         .unwrap_or_default();
     let (editor, operations, warnings) = if ext.eq_ignore_ascii_case("pp3") {
-        parse_pp3(&content)
+        parse_pp3(&content).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?
     } else if ext.eq_ignore_ascii_case("dop") && !content.trim_start().starts_with('<') {
         parse_dop(&content).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?
     } else {
@@ -467,27 +467,89 @@ fn split_camel_case(value: &str) -> String {
     words
 }
 
-fn parse_pp3(content: &str) -> (String, Vec<Operation>, Vec<String>) {
+/// Parse RawTherapee's INI-style PP3 format. A section plus at least one
+/// key/value setting is required so empty files and unrelated text are not
+/// silently reported as successful RawTherapee sidecars.
+fn parse_pp3(content: &str) -> Result<(String, Vec<Operation>, Vec<String>), String> {
     let mut section = String::new();
     let mut operations = BTreeMap::new();
-    for line in content.lines() {
-        let line = line.trim();
-        if line.starts_with('[') && line.ends_with(']') {
-            section = normalize_operation(&line[1..line.len() - 1]);
-        } else if let Some((key, value)) = line.split_once('=') {
-            if key.trim().eq_ignore_ascii_case("Enabled") && !section.is_empty() {
-                operations.insert(section.clone(), parse_bool(value.trim()));
+    let mut saw_section = false;
+    let mut saw_assignment = false;
+
+    for (line_number, source_line) in content.lines().enumerate() {
+        let line = source_line.trim();
+        if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+            continue;
+        }
+        if line.starts_with('[') {
+            let Some(raw_section) = line
+                .strip_prefix('[')
+                .and_then(|value| value.strip_suffix(']'))
+            else {
+                return Err(format!(
+                    "PP3 line {} has an invalid section heading",
+                    line_number + 1
+                ));
+            };
+            if raw_section.trim().is_empty()
+                || raw_section.contains('[')
+                || raw_section.contains(']')
+            {
+                return Err(format!(
+                    "PP3 line {} has an invalid section heading",
+                    line_number + 1
+                ));
             }
+            section = normalize_operation(raw_section);
+            if section.is_empty() {
+                return Err(format!(
+                    "PP3 line {} has an invalid section heading",
+                    line_number + 1
+                ));
+            }
+            saw_section = true;
+            continue;
+        }
+
+        let Some((key, value)) = line.split_once('=') else {
+            return Err(format!(
+                "PP3 line {} is not a section or key=value setting",
+                line_number + 1
+            ));
+        };
+        if key.trim().is_empty() {
+            return Err(format!(
+                "PP3 line {} has an empty setting name",
+                line_number + 1
+            ));
+        }
+        if section.is_empty() {
+            return Err(format!(
+                "PP3 line {} appears before a section",
+                line_number + 1
+            ));
+        }
+        saw_assignment = true;
+        if key.trim().eq_ignore_ascii_case("Enabled") && section != "version" {
+            operations.insert(section.clone(), parse_bool(value.trim()));
         }
     }
-    (
+
+    if !saw_section {
+        return Err("PP3 sidecar has no sections".into());
+    }
+    if !saw_assignment {
+        return Err("PP3 sidecar has no key=value settings".into());
+    }
+
+    Ok((
         "RawTherapee".into(),
         operations
             .into_iter()
             .map(|(name, active)| Operation { name, active })
             .collect(),
         Vec::new(),
-    )
+    ))
 }
 
 fn attributes(
@@ -642,12 +704,39 @@ mod tests {
     #[test]
     fn parses_rawtherapee_sections() {
         let (_, operations, _) =
-            parse_pp3("[Crop]\nEnabled=true\n[Directional Pyramid Denoising]\nEnabled=1\n");
+            parse_pp3("[Crop]\nEnabled=true\n[Directional Pyramid Denoising]\nEnabled=1\n")
+                .unwrap();
         assert!(operations.iter().any(|op| op.name == "crop" && op.active));
         assert!(
             operations
                 .iter()
                 .any(|op| op.name == "denoise" && op.active)
+        );
+    }
+
+    #[test]
+    fn accepts_valid_pp3_and_rejects_empty_or_arbitrary_text() {
+        let (editor, operations, warnings) =
+            parse_pp3(include_str!("../tests/fixtures/valid-rawtherapee.pp3")).unwrap();
+        assert_eq!(editor, "RawTherapee");
+        assert!(operations.iter().any(|op| op.name == "crop" && op.active));
+        assert!(
+            operations
+                .iter()
+                .any(|op| op.name == "denoise" && op.active)
+        );
+        assert!(warnings.is_empty());
+
+        assert_eq!(
+            parse_pp3(include_str!("../tests/fixtures/malformed-empty.pp3")).unwrap_err(),
+            "PP3 sidecar has no sections"
+        );
+        assert_eq!(
+            parse_pp3(include_str!(
+                "../tests/fixtures/malformed-arbitrary-text.pp3"
+            ))
+            .unwrap_err(),
+            "PP3 line 1 is not a section or key=value setting"
         );
     }
 

@@ -1,0 +1,6 @@
+[Version]
+AppVersion=5.11
+[Crop]
+Enabled=true
+[Directional Pyramid Denoising]
+Enabled=1

@@ -26,6 +26,14 @@ describe("sidecar demo vocabulary", () => {
     expect(isWellFormedXml("<!DOCTYPE sidecar><sidecar />")).toBe(false);
   });
 
+  it("accepts valid PP3 sections and rejects empty or arbitrary PP3 text", () => {
+    expect(parseSidecars("--- FILE: valid.pp3\n[Crop]\nEnabled=true\n")).toEqual([
+      { name: "valid.pp3", editor: "RawTherapee", operations: ["crop"] }
+    ]);
+    expect(() => parseSidecars("--- FILE: empty.pp3\n")).toThrow(/Could not parse empty\.pp3/);
+    expect(() => parseSidecars("--- FILE: arbitrary.pp3\nThis is plain text, not a PP3 sidecar.\n")).toThrow(/Could not parse arbitrary\.pp3/);
+  });
+
   it("extracts the documented sidecars without invoking DOMParser", () => {
     expect(globalThis.DOMParser).toBeUndefined();
     expect(parseSidecars(SAMPLE)).toEqual([

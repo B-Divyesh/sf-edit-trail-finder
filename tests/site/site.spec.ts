@@ -331,23 +331,26 @@ test("@claim:offline-reload demo and legal routes reopen with their own content 
   }
 });
 
-test("@claim:local-sidecar-search CLI indexes supported sidecars without reading image pixels", async ({}, testInfo) => {
+test("@claim:local-sidecar-search CLI indexes valid sidecars and records malformed sidecars as warnings without reading image pixels", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "One CLI run is sufficient");
   const work = mkdtempSync(join(tmpdir(), "edit-trail-claim-"));
   try {
     writeFileSync(join(work, "darktable.NEF.xmp"), '<sidecar history_end="2"><module num="0" operation="crop" enabled="true"/><module num="1" operation="denoiseprofile" enabled="true"/><module num="2" operation="contrast" enabled="true"/></sidecar>');
-    writeFileSync(join(work, "rawtherapee.pp3"), "[Crop]\nEnabled=true\n[Directional Pyramid Denoising]\nEnabled=1\n");
+    writeFileSync(join(work, "rawtherapee.pp3"), readFileSync(resolve("tests/fixtures/valid-rawtherapee.pp3")));
     writeFileSync(join(work, "dxo.dop"), readFileSync(resolve("examples/sample-archive/lantern-0917.ARW.dop")));
     writeFileSync(join(work, "broken.xmp"), "<not-closed");
+    writeFileSync(join(work, "empty.pp3"), readFileSync(resolve("tests/fixtures/malformed-empty.pp3")));
+    writeFileSync(join(work, "arbitrary-text.pp3"), readFileSync(resolve("tests/fixtures/malformed-arbitrary-text.pp3")));
     writeFileSync(join(work, "private.RAW"), "PRIVATE_PIXEL_MARKER");
     const binary = resolve("target/release/edit-trail");
     const index = join(work, "trail.json");
-    execFileSync(binary, ["index", work, "--output", index, "--json"]);
+    const summary = JSON.parse(execFileSync(binary, ["index", work, "--output", index, "--json"], { encoding: "utf8" }));
+    expect(summary).toMatchObject({ sidecars: 6, parsed: 3, warnings: 3 });
     const indexed = readFileSync(index, "utf8");
     expect(indexed).not.toContain("PRIVATE_PIXEL_MARKER");
     const parsedIndex = JSON.parse(indexed);
     expect(parsedIndex.root).toBe(work);
-    expect(parsedIndex.sidecars_seen).toBe(4);
+    expect(parsedIndex.sidecars_seen).toBe(6);
     expect(parsedIndex.scan_warnings).toEqual([]);
     for (const record of parsedIndex.records) {
       expect(record.sidecar).toEqual(expect.any(String));
@@ -357,7 +360,11 @@ test("@claim:local-sidecar-search CLI indexes supported sidecars without reading
       expect(record.operations).toEqual(expect.any(Array));
       if (record.warnings !== undefined) expect(record.warnings).toEqual(expect.any(Array));
     }
-    expect(parsedIndex.records.find((record: { sidecar: string }) => record.sidecar.endsWith("broken.xmp")).warnings).toHaveLength(1);
+    for (const name of ["broken.xmp", "empty.pp3", "arbitrary-text.pp3"]) {
+      const record = parsedIndex.records.find((item: { sidecar: string }) => item.sidecar.endsWith(name));
+      expect(record.warnings).toHaveLength(1);
+      expect(record.warnings[0]).toContain("Could not parse sidecar:");
+    }
     const darktable = parsedIndex.records.find((record: { sidecar: string }) => record.sidecar.endsWith("darktable.NEF.xmp"));
     expect(darktable.operations).toEqual(expect.arrayContaining([
       { name: "crop", active: true },

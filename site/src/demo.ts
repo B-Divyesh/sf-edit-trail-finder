@@ -365,22 +365,26 @@ function parsePp3(name: string, content: string): DemoRecord {
   let section = "";
   const operations = new Set<string>();
   let sawSection = false;
+  let sawAssignment = false;
   for (const sourceLine of content.split(/\r?\n/)) {
     const line = sourceLine.trim();
     if (!line || line.startsWith("#") || line.startsWith(";")) continue;
-    const heading = /^\[([^\]]+)]$/.exec(line);
+    const heading = /^\[([^\[\]]+)]$/.exec(line);
     if (heading) {
       section = normalizeOperation(heading[1]);
+      if (!section) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
       sawSection = true;
       continue;
     }
     const pair = /^([^=]+)=(.*)$/.exec(line);
     if (!pair) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
-    if (pair[1].trim().toLowerCase() === "enabled" && truthy(pair[2]) && section && section !== "version") {
+    if (!section || !pair[1].trim()) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
+    sawAssignment = true;
+    if (pair[1].trim().toLowerCase() === "enabled" && truthy(pair[2]) && section !== "version") {
       operations.add(section);
     }
   }
-  if (!sawSection) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
+  if (!sawSection || !sawAssignment) throw new Error(`Could not parse ${name}. Check that its PP3 data is complete.`);
   return { name, editor: "RawTherapee", operations: [...operations].sort() };
 }
 

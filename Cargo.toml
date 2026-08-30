@@ -10,7 +10,7 @@ homepage = "https://edit-trail-finder.sociobot.in"
 readme = "README.md"
 keywords = ["photography", "xmp", "darktable", "lightroom", "cli"]
 categories = ["command-line-utilities", "multimedia::images"]
-include = ["/src/**", "/tests/cli.rs", "/examples/**", "/Cargo.toml", "/README.md", "/LICENSE", "/CHANGELOG.md"]
+include = ["/src/**", "/tests/cli.rs", "/tests/fixtures/**", "/examples/**", "/Cargo.toml", "/README.md", "/LICENSE", "/CHANGELOG.md"]
 
 [dependencies]
 clap = { version = "4.5", features = ["derive", "wrap_help"] }

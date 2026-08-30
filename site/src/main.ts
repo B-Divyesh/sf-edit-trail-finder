@@ -71,6 +71,42 @@ function setupTabs(): void {
   });
 }
 
+function setupMobileNavigation(): void {
+  const toggle = query<HTMLButtonElement>("[data-navigation-toggle]");
+  const navigation = query<HTMLElement>("#site-navigation");
+  if (!toggle || !navigation) return;
+
+  const close = (restoreFocus = false): void => {
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open navigation menu");
+    navigation.classList.remove("is-open");
+    if (restoreFocus) toggle.focus();
+  };
+  const open = (): void => {
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.setAttribute("aria-label", "Close navigation menu");
+    navigation.classList.add("is-open");
+    query<HTMLAnchorElement>("#site-navigation a")?.focus();
+  };
+
+  toggle.addEventListener("click", () => {
+    if (toggle.getAttribute("aria-expanded") === "true") close(true);
+    else open();
+  });
+  navigation.addEventListener("click", (event) => {
+    if ((event.target as Element).closest("a")) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+      event.preventDefault();
+      close(true);
+    }
+  });
+  window.matchMedia("(max-width: 900px)").addEventListener("change", (event) => {
+    if (!event.matches) close();
+  });
+}
+
 function setupDemo(): void {
   const input = query<HTMLTextAreaElement>("#sidecar-input");
   const fileInput = query<HTMLInputElement>("#sidecar-files");
@@ -195,6 +231,16 @@ function setupRouteFocus(): void {
     const heading = query<HTMLElement>("h1");
     if (announcement && heading) announcement.textContent = `${heading.textContent?.trim() ?? "Page"} loaded`;
   });
+  let fragmentTarget: HTMLElement | null = null;
+  try {
+    const fragmentId = decodeURIComponent(window.location.hash.slice(1));
+    fragmentTarget = fragmentId ? document.getElementById(fragmentId) : null;
+  } catch {
+    fragmentTarget = null;
+  }
+  if (fragmentTarget?.matches("h1[tabindex]")) {
+    requestAnimationFrame(() => fragmentTarget.focus({ preventScroll: true }));
+  }
 }
 
 function setupRecipeDownload(): void {
@@ -212,6 +258,7 @@ setOnlineStatus();
 window.addEventListener("online", () => setOfflineBanner(false));
 window.addEventListener("offline", () => setOfflineBanner(true));
 setupCopyButtons();
+setupMobileNavigation();
 setupTabs();
 setupDemo();
 setupRecipeDownload();

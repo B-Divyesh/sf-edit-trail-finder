@@ -196,7 +196,7 @@ test("all routes provide their own sharing metadata and the shared shell", async
     for (const selector of ["meta[name=description]", "link[rel=canonical]", "meta[property='og:title']", "meta[name='twitter:card']", "link[rel='apple-touch-icon']"]) {
       await expect(page.locator(selector)).toHaveCount(1);
     }
-    await expect(page.getByRole("navigation", { name: "Main navigation" })).toContainText("Try sample data");
+    await expect(page.locator("nav[aria-label='Main navigation']")).toContainText("Try sample data");
     await expect(page.locator("footer")).toContainText("Built by Param Factory");
   }
 });
@@ -209,6 +209,28 @@ test("mobile type and direct links meet the supplied baseline", async ({ page })
   expect((await page.getByRole("link", { name: /Read full CLI reference/ }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
   expect(parseFloat(await page.locator(".micro").first().evaluate((element) => getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(14);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+});
+
+test("mobile navigation exposes every destination and manages keyboard focus", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const toggle = page.locator("[data-navigation-toggle]");
+  await expect(toggle).toHaveAccessibleName("Open navigation menu");
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const navigation = page.getByRole("navigation", { name: "Main navigation" });
+  for (const name of ["Try sample data", "CLI guide", "Privacy", "Install"]) {
+    await expect(navigation.getByRole("link", { name, exact: true })).toBeVisible();
+  }
+  await page.keyboard.press("Escape");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toBeFocused();
+
+  await page.keyboard.press(" ");
+  await navigation.getByRole("link", { name: "Privacy", exact: true }).click();
+  await expect(page).toHaveURL(/\/privacy\/#privacy-title$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeFocused();
 });
 
 test("first-screen facts stay inside desktop and mobile viewports", async ({ page }) => {
@@ -295,9 +317,9 @@ test("@claim:offline-reload demo and legal routes reopen with their own content 
       return { waiting: Boolean(registration.waiting), caches: await caches.keys() };
     });
     expect(workerState.waiting).toBe(false);
-    expect(workerState.caches).toContain("edit-trail-v5");
+    expect(workerState.caches).toContain("edit-trail-v6");
     const cachedPaths = await page.evaluate(async () => {
-      const cache = await caches.open("edit-trail-v5");
+      const cache = await caches.open("edit-trail-v6");
       return (await cache.keys()).map((request) => new URL(request.url).pathname);
     });
     expect(cachedPaths).toEqual(expect.arrayContaining(["/", "/demo/", "/privacy/", "/terms/"]));

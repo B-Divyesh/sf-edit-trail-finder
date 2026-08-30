@@ -56,6 +56,9 @@ commands and report samples.
 - Copy actions change label to “Copied” and announce through a live region.
 - Tabs behave as real ARIA tabs with arrow-key navigation. Focus uses a 3 px
   cyan outer ring with a 2 px ink gap.
+- On narrow screens, the shared navigation folds into a cyan-edged market
+  directory. Its squared panel and pink offset shadow reuse the work-order
+  language; Escape closes it and returns focus to its labeled trigger.
 - The warm clipped ticket now contains free audit recipes. It keeps the
   work-order shape language without advertising an unavailable paid service.
 

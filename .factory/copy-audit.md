@@ -57,6 +57,7 @@ differs or a sentence exceeds 22 words.
 | ---: | --- |
 | 4 | Skip to main content |
 | 2 | Edit Trail |
+| 1 | Menu |
 | 3 | Try sample data |
 | 2 | CLI guide |
 | 1 | Privacy |

@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const base = (process.argv[2] ?? "https://edit-trail-finder.sociobot.in").replace(/\/$/, "");
-const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-2-live");
+const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-3-live");
 await mkdir(evidence, { recursive: true });
 const browser = await chromium.launch();
 const report = { base, checks: [], consoleErrors: [], externalRequests: [], axeViolations: [] };
@@ -18,7 +18,7 @@ try {
   await context.addInitScript(() => localStorage.setItem("real:test-sentinel", "keep"));
   const page = await context.newPage();
   page.on("console", (message) => {
-    const expectedMissingRoute = page.url().includes("/missing-polish-2-check") && message.text().includes("404");
+    const expectedMissingRoute = page.url().includes("/missing-polish-3-check") && message.text().includes("404");
     if (message.type() === "error" && !expectedMissingRoute) report.consoleErrors.push(message.text());
   });
   page.on("request", (request) => {
@@ -105,7 +105,7 @@ try {
     const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     report.axeViolations.push(...axe.violations.map((violation) => `${path}:${violation.id}`));
   }
-  response = await page.goto(`${base}/missing-polish-2-check`, { waitUntil: "networkidle" });
+  response = await page.goto(`${base}/missing-polish-3-check`, { waitUntil: "networkidle" });
   check(response?.status() === 404, "unknown route returns HTTP 404");
   check(await page.title() === "Page not found — Edit Trail" && await page.getByRole("link", { name: "Return to Edit Trail" }).isVisible(), "404 is designed and links home");
   const notFoundAxe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -116,6 +116,20 @@ try {
   const mobileFact = await page.locator(".hero-facts li").last().boundingBox();
   check(Boolean(mobileFact && mobileFact.y + mobileFact.height <= 844), "mobile first-screen facts fit the viewport");
   check(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "mobile home has no horizontal overflow");
+  const menuToggle = page.getByRole("button", { name: "Open navigation menu" });
+  await menuToggle.focus();
+  await page.keyboard.press("Enter");
+  const mobileNavigation = page.getByRole("navigation", { name: "Main navigation" });
+  for (const name of ["Try sample data", "CLI guide", "Privacy", "Install"]) {
+    check(await mobileNavigation.getByRole("link", { name, exact: true }).isVisible(), `mobile menu exposes ${name}`);
+  }
+  await page.keyboard.press("Escape");
+  check(await menuToggle.getAttribute("aria-expanded") === "false" && await menuToggle.evaluate((element) => element === document.activeElement), "Escape closes the mobile menu and returns focus");
+  await page.keyboard.press(" ");
+  await mobileNavigation.getByRole("link", { name: "Privacy", exact: true }).click();
+  await page.waitForURL(`${base}/privacy/#privacy-title`);
+  check(await page.getByRole("heading", { level: 1, name: "Privacy" }).evaluate((element) => element === document.activeElement), "mobile Privacy navigation focuses the route heading");
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
   await page.screenshot({ path: resolve(evidence, "home-mobile.png"), fullPage: true });
   await page.goto(`${base}/demo/`, { waitUntil: "networkidle" });
   check(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "mobile demo has no horizontal overflow");

@@ -39,6 +39,13 @@ img { max-width: 100%; height: auto; display: block; }
 .site-header nav a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--paper-300); text-decoration: none; font: 500 14px/1 var(--mono); }
 .site-header nav a:hover { color: var(--paper-100); }
 .site-header .nav-cta { border: 1px solid var(--cyan); color: var(--cyan); padding-inline: 18px; }
+.nav-menu-toggle { display: none; min-width: 44px; min-height: 44px; padding: 0 12px; position: relative; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--cyan); border-radius: 2px; background: var(--ink-900); color: var(--cyan); font: 700 14px/1 var(--mono); cursor: pointer; }
+.nav-menu-toggle::before, .nav-menu-toggle::after { content: ""; width: 15px; height: 2px; position: absolute; left: 12px; background: currentColor; transition: top 180ms ease, transform 180ms ease; }
+.nav-menu-toggle::before { top: 17px; }
+.nav-menu-toggle::after { top: 25px; }
+.nav-menu-toggle[aria-expanded="true"]::before { top: 21px; transform: rotate(45deg); }
+.nav-menu-toggle[aria-expanded="true"]::after { top: 21px; transform: rotate(-45deg); }
+.nav-menu-toggle span { margin-left: 20px; }
 
 .hero { width: min(1320px, 100%); margin: 0 auto; min-height: 610px; display: grid; grid-template-columns: minmax(390px, .88fr) 1.12fr; align-items: center; overflow: hidden; }
 .hero-copy { max-width: 660px; padding: 48px 24px 52px max(24px, calc((100vw - 1180px) / 2)); position: relative; z-index: 2; }
@@ -163,7 +170,12 @@ footer p { font-size: 14px; }footer nav a { min-height: 44px; display: inline-fl
 .legal-page main { width: min(760px, calc(100% - 48px)); margin: auto; padding: 80px 0 120px; }.legal-page h1 { font-size: clamp(3rem, 9vw, 5.5rem); }.legal-page h2 { margin-top: 52px; font-size: 26px; letter-spacing: -.04em; }.legal-page p, .legal-page li { color: var(--paper-300); }.legal-page .updated { font-family: var(--mono); color: var(--cyan); }
 
 @media (max-width: 900px) {
-  .site-header nav a:not(.nav-cta) { display: none; }
+  .nav-menu-toggle { display: inline-flex; }
+  .site-header nav { display: none; width: min(320px, calc(100vw - 32px)); padding: 10px; position: absolute; top: calc(100% - 6px); right: 0; flex-direction: column; align-items: stretch; gap: 4px; border: 1px solid #4d4956; border-top: 3px solid var(--cyan); background: var(--ink-900); box-shadow: 10px 10px 0 rgba(255, 92, 168, .2); }
+  .site-header nav.is-open { display: flex; }
+  .site-header nav a { width: 100%; padding: 0 14px; justify-content: flex-start; }
+  .site-header nav a:hover { background: var(--ink-800); }
+  .site-header .nav-cta { border-color: var(--cyan); }
   .hero { min-height: auto; grid-template-columns: 1fr; }
   .hero-copy { max-width: none; padding: 70px 24px 48px; }
   .hero-visual { min-height: 460px; }.hero-visual::before { inset: 0 0 auto; width: auto; height: 22%; background: linear-gradient(180deg, var(--ink-950), transparent); }
@@ -175,7 +187,7 @@ footer p { font-size: 14px; }footer nav a { min-height: 44px; display: inline-fl
 
 @media (max-width: 560px) {
   body { font-size: 17px; }
-  .site-header, footer, .section { width: min(100% - 32px, 1180px); }.site-header { min-height: 72px; }.site-header .nav-cta { padding-inline: 13px; }
+  .site-header, footer, .section { width: min(100% - 32px, 1180px); }.site-header { min-height: 72px; }.site-header .nav-cta { padding-inline: 14px; }
   h1 { font-size: clamp(2.55rem, 12vw, 3.75rem); }.hero-copy { padding-top: 40px; padding-bottom: 30px; }.hero-visual { min-height: 360px; }.floating-query { right: 16px; left: 16px; bottom: 26px; }
   .hero-actions { display: grid; }.hero-actions .button { width: 100%; }.proof-strip div { padding: 22px 18px; display: block; }.proof-strip span { display: block; margin-top: 6px; }
   .section { padding: 84px 0; }.section-heading { margin-bottom: 36px; }.demo { width: 100%; padding-inline: 16px; border-inline: 0; }.demo-banner { margin: -44px 0 36px; align-items: flex-start; flex-direction: column; }.demo-input, .demo-output { padding: 20px 16px; }textarea { min-height: 340px; font-size: 15px; }

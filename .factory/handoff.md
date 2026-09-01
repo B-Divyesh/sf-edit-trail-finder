@@ -1,4 +1,23 @@
-# Edit Trail — polish round 5 handoff
+# Edit Trail — verification 13 handoff
+
+## Current verification status
+
+**PASS — candidate `2c32f77621a4fc16597e8c9c0d52f7983adae142` is verified for
+release at <https://edit-trail-finder.sociobot.in/>.**
+
+Independent evidence is recorded in [verification-13.md](verification-13.md):
+all 18 mandatory claims passed; the complete local test/build/type/package
+matrix passed; a clean consumer installed the packaged CLI; the brief's
+10,000-sidecar case completed in 0.251 s to index and 0.026 s to query; and
+the 117-check live browser suite passed with zero console errors, external
+requests, or Axe WCAG 2 A/AA findings. All 32 public deployed artifacts are
+byte-identical to this candidate build.
+
+No product defects are known. Lighthouse completed 100/100 category audits,
+but this container's browser crashed only while capturing its final screenshot
+after audit completion; independent Playwright/Axe browser checks passed.
+
+## Previous builder handoff
 
 ## Status
 

@@ -203,7 +203,7 @@ footer p { font-size: 14px; }footer nav a { min-height: 44px; display: inline-fl
 @media (max-width: 560px) {
   body { font-size: 17px; }
   .site-header, footer, .section { width: min(100% - 32px, 1180px); }.site-header { min-height: 72px; }.site-header .nav-cta { padding-inline: 14px; }
-  h1 { font-size: clamp(2.55rem, 12vw, 3.75rem); }.hero-copy { padding-top: 40px; padding-bottom: 30px; }.hero-visual { min-height: 360px; }.floating-query { right: 16px; left: 16px; bottom: 26px; }
+  h1 { font-size: clamp(2.55rem, 10.5vw, 3.75rem); }.hero-copy { padding-top: 40px; padding-bottom: 30px; }.hero-visual { min-height: 360px; }.floating-query { right: 16px; left: 16px; bottom: 26px; }
   .hero-actions, .install-actions { display: grid; }.hero-actions .button, .install-actions .button { width: 100%; }.proof-strip div { padding: 22px 18px; display: block; }.proof-strip span { display: block; margin-top: 6px; }
   .section { padding: 84px 0; }.section-heading { margin-bottom: 36px; }.demo { width: 100%; padding-inline: 16px; border-inline: 0; }.demo-banner { margin: -44px 0 36px; align-items: flex-start; flex-direction: column; }.demo-input, .demo-output { padding: 20px 16px; }textarea { min-height: 340px; font-size: 15px; }
   .eyebrow, .hero-facts, .floating-query, .route li > span, .demo-input > label, fieldset legend, .micro, .operation-filter label, .result-status, .result-list p, .result-tags span, .terminal-bar, .terminal-bar button, .recipe-row button, .proof-strip span, footer p, .toast { font-size: 14px; }

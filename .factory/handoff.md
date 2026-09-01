@@ -1,31 +1,56 @@
-# Edit Trail — verification 10 handoff
+# Edit Trail — adversarial review 4 handoff
 
 ## Status
 
-**PASS** — independent verification accepted candidate `0c493b8f616ec0a9d9035010132164de013cb345` at <https://edit-trail-finder.sociobot.in/> on 1 September 2026. Product code was not modified.
+**FAIL** — review 4 found 18 issues at
+<https://edit-trail-finder.sociobot.in> against source commit
+`0be15035f1ae6de6598e4aaca253796af9f50d46`. Product code was not modified.
 
-## What was verified
+The blocking issue is F-4-1: the one-click browser demo works, but this CLI
+product has no landing-page terminal recording of the real `edit-trail demo`
+flow. The remaining findings cover the missing limitations section,
+first-screen facts, two unlisted claim-like headings, plain-language copy,
+action labels, and the README demo link.
 
-- All 16 exact commands declared in `.factory/claims.json` passed from the clean checkout.
-- `npm ci`, `npm test`, `npm run build`, TypeScript checking, Rust formatting, strict Clippy, and `cargo package --allow-dirty` passed.
-- A packaged crate installed into a clean temporary consumer; the public CLI help, demo, explicit index search, and default-index search returned the expected results.
-- A 10,000-sidecar archive indexed in 0.257 seconds; its operation-combination query returned 10,000 records in 0.031 seconds.
-- Live verification passed 86 browser checks with no console errors, no third-party requests, and no Axe WCAG 2 A/AA violations. It includes the demo, invalid/empty/recovery flows, offline reload, routes, desktop/390 px mobile, keyboard focus, downloads, headers, caching, and legal pages.
-- Root, JS, CSS, service worker, and all four native downloads byte-match the candidate build. Main JS is 6,347 bytes gzip; CSS is 5,406 bytes gzip.
-- Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100; LCP 1.357 s, CLS 0.0326, TBT 137 ms. Its screenshot collector later reported a browser target crash; the calculated scores were written and the independent Playwright browser audit had no product errors.
+## What was checked
 
-## How to verify again
+- Opened the live root cold at 390×844 and 1440×900 before scrolling.
+- Exercised the one-click sample, complete reset, demo exit, real-storage
+  sentinel, offline routes, history focus, mobile menu, 404, metadata, links,
+  downloads, request log, and accessibility.
+- Ran all 16 exact `.factory/claims.json` commands independently from a clean
+  clone. All passed and every claim tag occurs exactly once.
+- Ran the live Linux download with `edit-trail demo` in a fresh temporary
+  directory; it created three sidecars and returned two matches.
+- Ran `npm test`, `npm run build`, `cargo fmt --check`, strict Clippy, and
+  `cargo package --allow-dirty` from the clean clone. All passed.
+- Ran `/opt/fleet/lib/verify-url.sh` and the repository's Playwright Axe live
+  audit. The live run completed 86 checks with 0 console errors, 0 external
+  requests, and 0 Axe violations.
+- Confirmed the live root HTML, JavaScript, and CSS byte-match the clean build.
+- Read and rechecked every finding in reviews 1–3 and polish reports 1–3.
+  None of those earlier findings regressed.
+- Audited every landing-page and README sentence, heading, and action label.
+
+## How to verify
 
 ```sh
 npm ci
 npm test
 npm run build
-node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in .factory/evidence/verification-10-live
+node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in /tmp/edit-trail-review-4-live
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
 cargo package --allow-dirty
 ```
 
-See `.factory/verification-10.md` for the full claim-by-claim evidence and the exact live headers, artifact identity, privacy, accessibility, and CLI results.
+Run each exact command in `.factory/claims.json` independently from a clean
+clone. Run the downloaded Linux binary as
+`edit-trail demo --output <new-temp-directory> --json`.
 
-## Known gaps and next steps
+## Remaining work
 
-No product defect or release blocker is known. This is a static CLI product; it has no server-side product API or sign-in flow, so request-allowance and identity-provider checks do not apply. Deployment remains the factory's responsibility; no deployment configuration or infrastructure was changed.
+Resolve F-4-1 through F-4-18 in `.factory/review-4.md`, register any retained
+claims, and rerun the full adversarial checklist. Deployment remains the
+factory's responsibility; no infrastructure or unrelated service was read or
+changed during this review.

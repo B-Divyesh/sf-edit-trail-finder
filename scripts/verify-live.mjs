@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const base = (process.argv[2] ?? "https://edit-trail-finder.sociobot.in").replace(/\/$/, "");
-const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-4-live");
+const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-5-live");
 await mkdir(evidence, { recursive: true });
 const browser = await chromium.launch();
 const report = { base, checks: [], consoleErrors: [], externalRequests: [], axeViolations: [] };
@@ -91,6 +91,16 @@ try {
   check(await page.locator("[data-demo-results] article").count() === 2, "reset redraws the two initial results");
   check(await page.evaluate(() => localStorage.getItem("real:test-sentinel")) === "keep", "demo leaves real storage untouched");
   await page.screenshot({ path: resolve(evidence, "demo-reset-desktop.png"), fullPage: false });
+  await page.locator("#sidecar-input").fill("");
+  await page.getByRole("button", { name: "Find matching files" }).click();
+  check(await page.locator("[data-demo-status]").innerText() === "0 of 0 sidecars match all selected operations.", "zero-sidecar search reports zero loaded records");
+  check(await page.locator(".empty-result").innerText() === "No sidecars yet. Paste sidecar data or choose sidecar files, then find matching files.", "zero-sidecar state tells users to paste or choose a sidecar");
+  await page.screenshot({ path: resolve(evidence, "demo-empty-desktop.png"), fullPage: false });
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.getByLabel("color balance rgb", { exact: true }).check();
+  await page.getByRole("button", { name: "Find matching files" }).click();
+  check(await page.locator(".empty-result").innerText() === "No matching trails. Try “Any selected” or choose fewer operations.", "loaded zero-match state retains filter guidance");
+  await page.getByRole("button", { name: "Reset demo" }).click();
   await page.getByRole("link", { name: "View install options" }).click();
   check(page.url() === `${base}/#install`, "demo exit reaches the real install section");
   check(!await page.getByText("Demo — sample data, nothing is saved").isVisible(), "demo banner is absent after exit");

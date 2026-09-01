@@ -1,1 +1,1 @@
-Find RAW photos by editing steps stored in local sidecars.
+Find RAW photos by the editing steps stored in XMP, DOP, and PP3 sidecars.

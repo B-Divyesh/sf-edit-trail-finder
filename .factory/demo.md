@@ -9,6 +9,10 @@ memory. The default crop-and-denoise search already shows two files. **Reset dem
 restores and reruns the bundled sample. **View install options** leaves the
 demo route and discards the sandbox.
 
+If no sidecar is loaded, the result tells the visitor to paste sidecar data or
+choose sidecar files before searching. Filter advice appears only when loaded
+sidecars produce no matches.
+
 The browser demo uses memory only. It does not use local storage or IndexedDB,
 and selected sidecars are not uploaded. Closing the tab discards changes.
 

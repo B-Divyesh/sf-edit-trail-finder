@@ -157,7 +157,9 @@ function setupDemo(): void {
     if (!matches.length) {
       const empty = document.createElement("p");
       empty.className = "empty-result";
-      empty.textContent = "No matching trails. Try “Any selected” or choose fewer operations.";
+      empty.textContent = records.length === 0
+        ? "No sidecars yet. Paste sidecar data or choose sidecar files, then find matching files."
+        : "No matching trails. Try “Any selected” or choose fewer operations.";
       resultRoot.replaceChildren(empty);
       return;
     }

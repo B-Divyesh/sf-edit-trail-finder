@@ -70,14 +70,14 @@ test("browser Back returns focus to the sample-demo trigger", async ({ page }) =
   await expect(trigger).toBeFocused();
 });
 
-test("demo exposes actionable malformed and empty states", async ({ page }) => {
+test("demo gives the right next action for malformed, zero-sidecar, and zero-match states", async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
   await page.route("**/", async (route) => {
     const response = await route.fetch();
     await route.fulfill({ response, headers: { ...response.headers(), "content-security-policy": productionCsp } });
   });
-  await page.goto("/#demo");
+  await page.goto("/demo/");
   await page.locator("#sidecar-input").fill("<broken");
   await page.getByRole("button", { name: /Find matching files/ }).click();
   await expect(page.locator("[data-demo-status]")).toContainText("Could not parse");
@@ -85,7 +85,13 @@ test("demo exposes actionable malformed and empty states", async ({ page }) => {
   await page.locator("#sidecar-input").fill("");
   await page.getByRole("button", { name: /Find matching files/ }).click();
   await expect(page.locator("[data-demo-status]")).toContainText("0 of 0 sidecars");
-  await expect(page.locator(".empty-result")).toBeVisible();
+  await expect(page.locator(".empty-result")).toHaveText("No sidecars yet. Paste sidecar data or choose sidecar files, then find matching files.");
+
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.getByLabel("color balance rgb", { exact: true }).check();
+  await page.getByRole("button", { name: /Find matching files/ }).click();
+  await expect(page.locator("[data-demo-status]")).toContainText("0 of 3 sidecars");
+  await expect(page.locator(".empty-result")).toHaveText("No matching trails. Try “Any selected” or choose fewer operations.");
 });
 
 test("command tabs support arrow-key navigation", async ({ page }) => {

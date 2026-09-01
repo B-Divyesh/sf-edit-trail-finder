@@ -49,6 +49,8 @@ differs or a sentence exceeds 22 words.
 | 8 | 2 of 3 sidecars match all selected operations. |
 | 4 | No sidecar content yet. |
 | 6 | Paste a sidecar or choose files. |
+| 3 | No sidecars yet. |
+| 11 | Paste sidecar data or choose sidecar files, then find matching files. |
 | 3 | No matching trails. |
 | 7 | Try “Any selected” or choose fewer operations. |
 | 4 | Could not parse [name]. |

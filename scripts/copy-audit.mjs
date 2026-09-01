@@ -49,6 +49,8 @@ const dynamic = [
   ["2 of 3 sidecars match all selected operations.", "sidecars match ${mode} selected operations."],
   ["No sidecar content yet.", "No sidecar content yet."],
   ["Paste a sidecar or choose files.", "Paste a sidecar or choose files."],
+  ["No sidecars yet.", "No sidecars yet."],
+  ["Paste sidecar data or choose sidecar files, then find matching files.", "Paste sidecar data or choose sidecar files, then find matching files."],
   ["No matching trails.", "No matching trails."],
   ["Try “Any selected” or choose fewer operations.", "Try “Any selected” or choose fewer operations."],
   ["Could not parse [name].", "Could not parse ${name}."],

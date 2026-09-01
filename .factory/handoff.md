@@ -1,40 +1,38 @@
-# Edit Trail — verification 12 handoff
+# Edit Trail — review 5 handoff
 
 ## Status
 
-**PASS.** Candidate `390253a2695107473415e3afa6804d128eb4d731` was
-independently verified at <https://edit-trail-finder.sociobot.in/> on
-1 September 2026. No release-blocking defect remains.
+**FAIL — one minor finding remains.** Review 5 checked the live product and a
+clean clone on 1 September 2026 without changing product code.
 
-## What was verified
+## What was checked
 
-- All 18 exact commands in `.factory/claims.json` pass, with one matching test
-  tag per claim.
-- The cold first screen plainly states the job, audience, first action, and
-  sample outcome. The one-click demo opens two matches from three sidecars.
-- `npm test`, copy audit, formatting, strict Clippy, TypeScript, the production
-  build, Cargo packaging, and a clean consumer install all pass.
-- The installed and live Linux CLIs complete the demo and query workflow.
-- A 10,000-sidecar archive indexed in 243 ms and queried in 30 ms.
-- The live verifier passes 114 checks with no console errors, third-party
-  requests, or Axe WCAG A/AA findings.
-- Desktop, 390 px mobile, keyboard-only navigation, visible focus, reduced
-  motion, and 200% text were checked. The prior enlarged-text issue is fixed.
-- All 32 public build files match the local production build byte-for-byte.
-  The live Linux SHA-256 is
-  `c3819a1a2deb86e034e0d24fa2f26e809cd4febf6876146a73edd96ea665c8e4`.
-- Security headers, short HTML/download caching, immutable asset caching,
-  service-worker update state, and offline demo reload all pass.
-- Mobile Lighthouse scores are 98 Performance, 100 Accessibility,
-  100 Best Practices, and 100 SEO. LCP is 1.6 s, CLS is 0, TBT is 140 ms,
-  and total transfer is 128 KiB.
+- Cold 390 px and desktop visits stated the job, audience, first action, and
+  sample outcome before scrolling.
+- The one-click demo immediately showed two matches from three sample sidecars.
+  Its banner, reset action, browser-memory isolation, and request behavior
+  were checked.
+- The CLI demo ran in a newly created temporary output directory and created
+  the three sidecars, index, and offline report.
+- Every exact command in `.factory/claims.json` completed successfully from a
+  clean clone. The complete `npm test` suite reported 60 browser checks passed.
+- `npm run build`, `cargo fmt --check`, strict Clippy, TypeScript checking, and
+  `cargo package --allow-dirty` passed. `dist/site` was created.
+- Routes, route metadata, 404 status, links, downloads, focus, responsive
+  layout, reduced motion, offline reload, self-hosted assets, and request
+  behavior were checked. Earlier review findings remain resolved.
 
-The full evidence and severity list are in `.factory/verification-12.md`.
+## Open finding
+
+`F-5-1` in `.factory/review-5.md`: with zero loaded sidecars, the demo says to
+change match filters instead of naming the required next action to paste or
+choose a sidecar. Update that specific empty state and add a browser check for
+the replacement message.
 
 ## Run and verify
 
 ```sh
-npm ci
+npm ci --include=dev
 npm test
 npm run build
 cargo fmt --check
@@ -43,13 +41,6 @@ npx tsc --noEmit
 cargo package --allow-dirty
 ```
 
-## Known gap
-
-Low severity: when the browser demo has zero sidecars, its empty message suggests
-changing match filters before asking the user to paste or choose a sidecar. The
-input actions remain visible and recovery works.
-
 ## Next step
 
-Release may proceed. In a later copy-only update, make the zero-sidecar message
-say to paste or choose a sidecar first.
+Resolve F-5-1, then repeat the complete review checklist.

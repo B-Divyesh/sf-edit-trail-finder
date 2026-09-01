@@ -1,4 +1,31 @@
-# Edit Trail — verification 13 handoff
+# Edit Trail — review 6 handoff
+
+## Status
+
+**PASS — independent adversarial review completed with no findings.**
+
+## What was done
+
+- Reviewed the live first screen at desktop and 390 px mobile.
+- Exercised demo entry/reset/empty states/exit, storage and request isolation,
+  focus behavior, and offline reload.
+- Ran every registered claim command from a clean clone.
+- Ran full test, build, format, lint, typecheck, package, and live browser
+  checks.
+- Rechecked prior findings.
+
+## Verify
+
+Run npm ci --include=dev; npm test; npm run build; cargo fmt --check; cargo
+clippy --all-targets --all-features -- -D warnings; npx tsc --noEmit; cargo
+package --allow-dirty; and node scripts/verify-live.mjs
+https://edit-trail-finder.sociobot.in /tmp/edit-trail-live-review.
+
+All 18 claims passed. The live audit passed 117 checks with zero console
+errors, third-party requests, or Axe WCAG 2 A/AA violations. No known gaps.
+
+## Previous handoff
+
 
 ## Current verification status
 

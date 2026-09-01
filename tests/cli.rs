@@ -65,6 +65,21 @@ fn documented_index_find_and_report_workflow() {
 
     let output = bin()
         .args([
+            "find",
+            "--operation",
+            "   ",
+            "--index",
+            index.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stderr.contains("operation names cannot be blank"));
+    assert!(stderr.contains("--operation crop"));
+
+    let output = bin()
+        .args([
             "report",
             "--index",
             index.to_str().unwrap(),

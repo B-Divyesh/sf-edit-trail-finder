@@ -1,7 +1,7 @@
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use edit_trail::{
     MatchMode, SidecarRecord, TrailIndex, build_index, csv_escape, html_escape, load_index,
-    operation_counts, query_index, save_index,
+    normalize_operation, operation_counts, query_index, save_index,
 };
 use serde::Serialize;
 use std::fs;
@@ -79,7 +79,13 @@ struct CommonIndexArgs {
 #[derive(Args, Debug)]
 struct FindArgs {
     /// Active operation to match; repeat for combinations
-    #[arg(short = 'o', long = "operation", required = true, value_name = "NAME")]
+    #[arg(
+        short = 'o',
+        long = "operation",
+        required = true,
+        value_name = "NAME",
+        value_parser = parse_operation_name
+    )]
     operations: Vec<String>,
     /// Require all named operations or any named operation
     #[arg(long, value_enum, default_value_t = MatchArg::All)]
@@ -110,7 +116,12 @@ struct ReportArgs {
     #[arg(long, default_value = "edit-trail-report.html", value_name = "HTML")]
     output: PathBuf,
     /// Include only records with this active operation; repeat for combinations
-    #[arg(short = 'o', long = "operation", value_name = "NAME")]
+    #[arg(
+        short = 'o',
+        long = "operation",
+        value_name = "NAME",
+        value_parser = parse_operation_name
+    )]
     operations: Vec<String>,
     /// Require all named operations or any named operation
     #[arg(long, value_enum, default_value_t = MatchArg::All)]
@@ -140,6 +151,15 @@ enum FormatArg {
     Table,
     Json,
     Csv,
+}
+
+fn parse_operation_name(value: &str) -> Result<String, String> {
+    let normalized = normalize_operation(value);
+    if normalized.is_empty() {
+        Err("operation names cannot be blank; provide a name such as `--operation crop`".into())
+    } else {
+        Ok(normalized)
+    }
 }
 
 #[derive(Serialize)]

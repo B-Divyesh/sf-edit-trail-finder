@@ -218,6 +218,31 @@ test("mobile type and direct links meet the supplied baseline", async ({ page })
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
+test("390px 200% text resize keeps the hero headline inside the viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.evaluate(() => {
+    // Snapshot first so every element is enlarged exactly once. This matches
+    // browser text enlargement without compounding inherited font sizes.
+    const sizes = [...document.querySelectorAll<HTMLElement>("body *")].map((element) => [element, Number.parseFloat(getComputedStyle(element).fontSize)] as const);
+    for (const [element, size] of sizes) {
+      if (Number.isFinite(size) && size > 0) element.style.fontSize = `${size * 2}px`;
+    }
+  });
+  const layout = await page.evaluate(() => {
+    const hero = document.querySelector<HTMLElement>(".hero")!;
+    const heading = document.querySelector<HTMLElement>("h1")!;
+    const heroBox = hero.getBoundingClientRect();
+    const headingBox = heading.getBoundingClientRect();
+    return {
+      documentFits: document.documentElement.scrollWidth === document.documentElement.clientWidth,
+      heroFits: hero.scrollWidth <= hero.clientWidth,
+      headlineFits: heading.scrollWidth <= heading.clientWidth && headingBox.right <= heroBox.right
+    };
+  });
+  expect(layout).toEqual({ documentFits: true, heroFits: true, headlineFits: true });
+});
+
 test("mobile navigation exposes every destination and manages keyboard focus", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");

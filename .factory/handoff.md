@@ -1,33 +1,62 @@
-# Edit Trail — review 5 handoff
+# Edit Trail — polish round 5 handoff
 
 ## Status
 
-**FAIL — one minor finding remains.** Review 5 checked the live product and a
-clean clone on 1 September 2026 without changing product code.
+**PASS — no known gaps.** All findings from reviews 1–5 are resolved in the
+deployed product.
 
-## What was checked
+- Repair commit: `df593ee`
+- Deployment: `435e1b85-40db-4c74-a638-ba3aa2c96d44`
+- Live URL: <https://edit-trail-finder.sociobot.in>
 
-- Cold 390 px and desktop visits stated the job, audience, first action, and
-  sample outcome before scrolling.
-- The one-click demo immediately showed two matches from three sample sidecars.
-  Its banner, reset action, browser-memory isolation, and request behavior
-  were checked.
-- The CLI demo ran in a newly created temporary output directory and created
-  the three sidecars, index, and offline report.
-- Every exact command in `.factory/claims.json` completed successfully from a
-  clean clone. The complete `npm test` suite reported 60 browser checks passed.
-- `npm run build`, `cargo fmt --check`, strict Clippy, TypeScript checking, and
-  `cargo package --allow-dirty` passed. `dist/site` was created.
-- Routes, route metadata, 404 status, links, downloads, focus, responsive
-  layout, reduced motion, offline reload, self-hosted assets, and request
-  behavior were checked. Earlier review findings remain resolved.
+## What changed
 
-## Open finding
+- Zero-sidecar searches now tell the user to paste sidecar data or choose
+  sidecar files before searching.
+- Loaded sidecars with zero matches still receive filter-specific advice.
+- The browser regression covers malformed input, zero loaded sidecars, and a
+  loaded zero-match search on desktop and 390 px mobile.
+- The live verifier now checks both empty states and captures
+  `.factory/evidence/polish-5-live/demo-empty-desktop.png`.
+- `.factory/demo.md`, the generated copy audit, and the verb-first catalogue
+  description were updated.
+- `.factory/polish-5.md` maps every cumulative finding to its repair and
+  evidence.
 
-`F-5-1` in `.factory/review-5.md`: with zero loaded sidecars, the demo says to
-change match filters instead of naming the required next action to paste or
-choose a sidecar. Update that specific empty state and add a browser check for
-the replacement message.
+## Clean-clone verification
+
+Clean clone: `/tmp/edit-trail-polish5-clean.bYasYz/repo`
+
+- All 18 exact `.factory/claims.json` commands passed independently.
+- `npm test`: passed 6 Rust library tests, 3 CLI integration tests, 1 doctest,
+  12 Vitest tests, and 53 Playwright tests. Seven duplicate mobile CLI tests
+  were skipped by design.
+- `npm run build`: passed and produced `dist/site`.
+- `cargo fmt --check`: passed.
+- `cargo clippy --all-targets --all-features -- -D warnings`: passed.
+- `npx tsc --noEmit`: passed.
+- `cargo package --allow-dirty`: passed; 16 files, 68.2 KiB unpacked and
+  19.8 KiB compressed.
+- Production bundle: 6.39 kB gzip JavaScript and 5.72 kB gzip CSS.
+- A generated 10,000-sidecar archive indexed in 236 ms. Its query returned
+  10,000 matches in 34 ms.
+
+## Post-deploy verification
+
+- `/opt/fleet/lib/verify-url.sh` returned HTTP 200 with the expected title,
+  `lang=en`, one h1, one main, complete alt text, named buttons, and zero
+  console errors. Evidence: `.factory/evidence/polish-5-url/verify.json`.
+- `node scripts/verify-live.mjs` passed 117 checks with zero console errors,
+  third-party requests, or Axe WCAG 2 A/AA violations. It covered one-click
+  demo isolation, reset, both empty states, exit, focus, mobile navigation,
+  metadata, legal pages, 404, native downloads, and offline reloads. Evidence:
+  `.factory/evidence/polish-5-live/live-check.json`.
+- Mobile Lighthouse scored 100 for performance, accessibility, best practices,
+  and SEO. FCP was 1.1 s, LCP 1.5 s, CLS 0, TBT 0 ms, and total transfer
+  128 KiB. Evidence: `.factory/evidence/polish-5-live/lighthouse.json`.
+- The downloaded live Linux binary matched the local artifact at SHA-256
+  `c3819a1a2deb86e034e0d24fa2f26e809cd4febf6876146a73edd96ea665c8e4`.
+  Its isolated demo created three sidecars and returned two matches.
 
 ## Run and verify
 
@@ -41,6 +70,12 @@ npx tsc --noEmit
 cargo package --allow-dirty
 ```
 
-## Next step
+Deploy only the static site for this product:
 
-Resolve F-5-1, then repeat the complete review checklist.
+```sh
+/opt/fleet/lib/deploy-static.sh edit-trail-finder /work/repo/dist/site
+```
+
+## Known gaps and next steps
+
+None.

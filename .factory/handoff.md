@@ -1,56 +1,95 @@
-# Edit Trail — adversarial review 4 handoff
+# Edit Trail — polish round 4 handoff
 
 ## Status
 
-**FAIL** — review 4 found 18 issues at
-<https://edit-trail-finder.sociobot.in> against source commit
-`0be15035f1ae6de6598e4aaca253796af9f50d46`. Product code was not modified.
+**PASS.** All 18 round-four findings and every previously recorded finding are
+resolved in product commit `5d619ad` (`fix: complete polish round four`). The
+repair and the accompanying verifier update are committed and pushed to
+`origin/main`.
 
-The blocking issue is F-4-1: the one-click browser demo works, but this CLI
-product has no landing-page terminal recording of the real `edit-trail demo`
-flow. The remaining findings cover the missing limitations section,
-first-screen facts, two unlisted claim-like headings, plain-language copy,
-action labels, and the README demo link.
+The static site was deployed through the work-order deployment configuration:
 
-## What was checked
+- Production URL: <https://edit-trail-finder.sociobot.in>
+- Static deployment: `cf40b54c-989e-4e1b-80b5-0e9f6339dd2d` — succeeded
+- Cold production audit: 114 checks, 0 console errors, 0 third-party
+  requests, and 0 WCAG 2 A/AA Axe violations
 
-- Opened the live root cold at 390×844 and 1440×900 before scrolling.
-- Exercised the one-click sample, complete reset, demo exit, real-storage
-  sentinel, offline routes, history focus, mobile menu, 404, metadata, links,
-  downloads, request log, and accessibility.
-- Ran all 16 exact `.factory/claims.json` commands independently from a clean
-  clone. All passed and every claim tag occurs exactly once.
-- Ran the live Linux download with `edit-trail demo` in a fresh temporary
-  directory; it created three sidecars and returned two matches.
-- Ran `npm test`, `npm run build`, `cargo fmt --check`, strict Clippy, and
-  `cargo package --allow-dirty` from the clean clone. All passed.
-- Ran `/opt/fleet/lib/verify-url.sh` and the repository's Playwright Axe live
-  audit. The live run completed 86 checks with 0 console errors, 0 external
-  requests, and 0 Axe violations.
-- Confirmed the live root HTML, JavaScript, and CSS byte-match the clean build.
-- Read and rechecked every finding in reviews 1–3 and polish reports 1–3.
-  None of those earlier findings regressed.
-- Audited every landing-page and README sentence, heading, and action label.
+## What changed
 
-## How to verify
+- Added a self-hosted landing-page terminal recording generated from the
+  shipped `edit-trail demo --output <temporary-directory> --json` command. It
+  truthfully shows three created sidecars and two matches, has an accessible
+  text transcript, and makes no external request.
+- Added the explicit **What Edit Trail does not do** boundary: it reads
+  sidecar metadata only and does not render, organise, upload, or edit photos.
+- Rewrote the first-screen facts and all review-four vague, jargon, metaphor,
+  and action-label copy. The primary sample action now has its outcome directly
+  beneath it on a 390 px screen.
+- Registered and independently tested the terminal-recording and local-only
+  boundary claims, bringing `.factory/claims.json` to 18 claims. Each tag
+  occurs exactly once.
+- Added the direct README demo URL, precise Rust 1.85+ source-build wording,
+  the verb-first catalog description, regenerated copy audit, and refreshed
+  demo/design documentation.
+
+## Verification
+
+All commands below completed from the clean clone
+`/tmp/edit-trail-polish4-clean.6IMrj8/repo` at `5d619ad`:
 
 ```sh
 npm ci
 npm test
 npm run build
-node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in /tmp/edit-trail-review-4-live
 cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo package --allow-dirty
 ```
 
-Run each exact command in `.factory/claims.json` independently from a clean
-clone. Run the downloaded Linux binary as
-`edit-trail demo --output <new-temp-directory> --json`.
+- Ran every one of the 18 exact commands listed in `.factory/claims.json`
+  independently from that clean clone; all passed. This includes
+  `@claim:cli-demo-recording` and `@claim:local-only-boundary`.
+- The full suite completed successfully after those individual claim runs,
+  including unit, CLI integration, copy-audit, Vitest, Playwright,
+  accessibility, packaging, and build checks.
+- Local URL smoke check:
+  `.factory/evidence/polish-4-local/verify-url/verify.json` — 200, one h1,
+  main landmark, `lang=en`, title, no missing image alt text, no unlabeled
+  buttons, and no console errors.
+- Production cold audit:
+  `.factory/evidence/polish-4-live/live-check.json` — 114 checks. It covers
+  the actual recording, reset/exit isolation, `?demo=1`, native executables,
+  titles and metadata, routes and 404, offline reload, keyboard/focus,
+  390 px layout, CSP, request privacy, and Playwright Axe across home, demo,
+  privacy, terms, and 404.
+- Production URL smoke check:
+  `.factory/evidence/polish-4-live/verify-url/verify.json` — 200 in 668 ms,
+  no console errors, one h1 and main, title/lang/alt/button checks pass.
+- Visual evidence: `home-desktop.png`, `home-mobile.png`,
+  `cli-demo-recording.png`, `demo-reset-desktop.png`, `demo-mobile.png`, and
+  `mobile-menu.png` under `.factory/evidence/polish-4-live/`.
+
+`npx @axe-core/cli` was also attempted, but its Selenium launcher could not
+find a system Chrome binary in this worker. The repository's Playwright Axe
+integration ran against the deployed Chromium browser instead and reported no
+violations on all five audited routes.
+
+## Run and deploy
+
+```sh
+npm ci
+npm test
+npm run build
+npm run build:site
+./target/release/edit-trail --help
+./target/release/edit-trail demo --output /tmp/edit-trail-demo --json
+```
+
+The ready-to-publish CLI artifact can be checked with `cargo package`; do not
+publish it from this worker. Static deployment is performed by the factory
+from `dist/site`.
 
 ## Remaining work
 
-Resolve F-4-1 through F-4-18 in `.factory/review-4.md`, register any retained
-claims, and rerun the full adversarial checklist. Deployment remains the
-factory's responsibility; no infrastructure or unrelated service was read or
-changed during this review.
+None known. No unrelated service, database, secret store, or infrastructure
+resource was read, changed, or restarted during this repair.

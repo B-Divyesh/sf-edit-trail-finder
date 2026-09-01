@@ -33,7 +33,7 @@ try {
   check((await page.locator(".hero-facts").innerText()).includes("Free to use · MIT licensed"), "first-screen price fact says free to use");
   check(await page.locator(".action-note").innerText() === "Opens three samples and shows two matches.", "sample outcome is stated beside the sample action");
   check(!(await page.locator("body").innerText()).includes("247"), "unproved 247 count is absent");
-  const homeText = await page.locator("body").innerText();
+  const homeText = await page.locator("body").textContent() ?? "";
   for (const text of ["What Edit Trail does not do", "It does not render, organise, upload, or edit photos.", "How Edit Trail searches sidecars", "Scan XMP, DOP, and PP3 sidecars in every subfolder.", "Find files with selected edits", "Your sidecars stay in this tab and are never uploaded.", "CLI behavior and outputs", "Free example commands", "Download 12 archive audit commands", "Example search commands"]) {
     check(homeText.includes(text), `round-four plain copy is live: ${text}`);
   }
@@ -47,7 +47,8 @@ try {
   }
   const recording = page.locator("img[data-cli-recording]");
   check(await recording.count() === 1 && await recording.getAttribute("src") === "/edit-trail-demo.svg", "self-hosted CLI terminal recording is on the landing page");
-  check((await page.locator("[data-cli-transcript]").innerText()).includes('"sidecars": 3') && (await page.locator("[data-cli-transcript]").innerText()).includes('"matches": 2'), "CLI transcript records the three-sidecar, two-match result");
+  const transcript = await page.locator("[data-cli-transcript]").textContent() ?? "";
+  check(transcript.includes('"sidecars": 3') && transcript.includes('"matches": 2'), "CLI transcript records the three-sidecar, two-match result");
   const recordingResponse = await context.request.get(`${base}/edit-trail-demo.svg`);
   check(recordingResponse.ok() && (await recordingResponse.text()).includes("edit-trail demo"), "CLI recording loads from the product origin");
   check(/exports\s+JSON/i.test(await page.locator(".proof-strip").innerText()), "JSON fact names its output");

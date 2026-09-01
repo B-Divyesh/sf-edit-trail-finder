@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title description">
+  <title id="title">Edit Trail CLI demo recording</title>
+  <desc id="description">A real edit-trail demo run creates three sample sidecars, an index, an offline report, and finds two matches.</desc>
+  <rect width="1200" height="700" fill="#0d0d10"/>
+  <rect x="20" y="20" width="1160" height="660" fill="#111116" stroke="#403d47" stroke-width="2"/>
+  <rect x="20" y="20" width="1160" height="58" fill="#17161c" stroke="#403d47" stroke-width="2"/>
+  <circle cx="52" cy="49" r="8" fill="#ff5ca8"/><circle cx="78" cy="49" r="8" fill="#ffc857"/><circle cx="104" cy="49" r="8" fill="#66e38f"/>
+  <text x="142" y="55" fill="#cfc5b4" font-family="Azeret Mono, monospace" font-size="20">edit-trail demo / recorded locally</text>
+  <text x="54" y="126" fill="#fff7e6" font-family="Azeret Mono, monospace" font-size="25" xml:space="preserve"><tspan x="54" dy="0" class="prompt">$ edit-trail demo --output &lt;temporary-directory&gt; --json</tspan><tspan x="54" dy="42" class="output">{</tspan><tspan x="54" dy="42" class="output">  &quot;workspace&quot;: &quot;&lt;temporary-directory&gt;&quot;,</tspan><tspan x="54" dy="42" class="output">  &quot;archive&quot;: &quot;&lt;temporary-directory&gt;/sample-archive&quot;,</tspan><tspan x="54" dy="42" class="output">  &quot;index&quot;: &quot;&lt;temporary-directory&gt;/edit-trail-demo.json&quot;,</tspan><tspan x="54" dy="42" class="output">  &quot;report&quot;: &quot;&lt;temporary-directory&gt;/edit-trail-demo-report.html&quot;,</tspan><tspan x="54" dy="42" class="output">  &quot;sidecars&quot;: 3,</tspan><tspan x="54" dy="42" class="output">  &quot;matches&quot;: 2</tspan><tspan x="54" dy="42" class="output">}</tspan></text>
+  <style>.prompt { fill: #59f3e6; } .output { fill: #cfc5b4; }</style>
+</svg>

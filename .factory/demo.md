@@ -14,6 +14,11 @@ and selected sidecars are not uploaded. Closing the tab discards changes.
 
 ## CLI
 
+The landing page includes a self-hosted terminal recording of the shipped
+Linux binary running this command. Its transcript is available below the
+recording. The build regenerates the SVG from a real run; only the temporary
+directory name is shortened for display.
+
 Run:
 
 ```sh

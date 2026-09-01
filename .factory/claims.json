@@ -22,14 +22,14 @@
   },
   {
     "id": "recipe-download",
-    "claim": "The free audit recipe pack downloads 12 plain-text commands, including a crop-and-denoise search, without an account.",
-    "where": "landing page recipe section",
+    "claim": "The free audit command pack downloads 12 plain-text commands, including a crop-and-denoise search, without an account.",
+    "where": "landing page command-download section",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:recipe-download",
     "sandbox": "fresh browser context; assert generated text download contains a documented combination query"
   },
   {
     "id": "browser-local",
-    "claim": "Selected browser-demo sidecars are parsed locally and never uploaded.",
+    "claim": "Selected browser-demo sidecars stay in the browser and are never uploaded.",
     "where": "landing page demo and privacy page",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:browser-local",
     "sandbox": "fresh browser context; choose an in-memory XMP file; record every request; assert no external request"
@@ -37,7 +37,7 @@
   {
     "id": "no-runtime-third-parties",
     "claim": "The site has no analytics, advertising, account, or payment runtime requests.",
-    "where": "privacy policy and recipe section",
+    "where": "privacy policy and command-download section",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:no-runtime-third-parties",
     "sandbox": "fresh production-browser context; record all root-page requests and assert they stay on the product origin"
   },
@@ -85,10 +85,24 @@
   },
   {
     "id": "mit-license",
-    "claim": "Edit Trail is MIT licensed.",
+    "claim": "Edit Trail is free to use and MIT licensed.",
     "where": "landing-page first-screen facts and README",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:mit-license",
     "sandbox": "production site and shipped repository license; assert visible MIT fact and MIT license text"
+  },
+  {
+    "id": "cli-demo-recording",
+    "claim": "The landing recording shows a real CLI demo creating three sidecars and finding two matches.",
+    "where": "landing-page CLI demo recording",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:cli-demo-recording",
+    "sandbox": "fresh production build; the recording generator runs the shipped binary; assert the self-hosted SVG and text transcript show three sidecars and two matches without an external request"
+  },
+  {
+    "id": "local-only-boundary",
+    "claim": "Edit Trail reads sidecar metadata only and does not modify or upload source photos.",
+    "where": "landing limitations section and privacy page",
+    "test": "npm run build:site && npm run test:e2e -- --grep @claim:local-only-boundary",
+    "sandbox": "fresh temporary archive with a raw-pixel marker; record source bytes and all requests while indexing and reporting; assert the marker is absent from output, sources are unchanged, and no network attempt occurs"
   },
   {
     "id": "default-index-path",
@@ -100,7 +114,7 @@
   {
     "id": "open-folder",
     "claim": "With --open and one match, the CLI asks the operating system to open the matching source folder.",
-    "where": "downloaded audit recipe and CLI help",
+    "where": "downloaded audit command pack and CLI help",
     "test": "npm run build:site && npm run test:e2e -- --grep @claim:open-folder",
     "sandbox": "fresh CLI demo; prepend a fake xdg-open executable; assert its only argument is the exact matching source folder"
   },

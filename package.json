@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:site": "vite build && node scripts/finalize-site.mjs && npm run build:cli && node scripts/verify-response-policy.mjs && node scripts/verify-deploy-artifacts.mjs",
+    "build:site": "vite build && npm run build:cli && node scripts/record-cli-demo.mjs && node scripts/finalize-site.mjs && node scripts/verify-response-policy.mjs && node scripts/verify-deploy-artifacts.mjs",
     "build:cli": "cargo build --release && node scripts/copy-binary.mjs",
     "build": "npm run build:site",
     "copy:audit": "node scripts/copy-audit.mjs",

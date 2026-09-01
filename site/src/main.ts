@@ -134,7 +134,7 @@ function setupDemo(): void {
     try {
       records = parseSidecars(input.value);
       renderOptions(selectedOperations);
-      status.textContent = records.length ? `${records.length} sidecars parsed locally. Choose editing steps, then search.` : "No sidecar content yet. Paste a sidecar or choose files.";
+      status.textContent = records.length ? `${records.length} sidecars are ready in this tab. Choose editing steps, then search.` : "No sidecar content yet. Paste a sidecar or choose files.";
       status.className = "result-status";
       return true;
     } catch (error) {
@@ -245,10 +245,10 @@ function setupRouteFocus(): void {
 
 function setupRecipeDownload(): void {
   query<HTMLButtonElement>("[data-download-recipes]")?.addEventListener("click", () => {
-    const recipes = ["# Edit Trail archive audit recipes", "edit-trail find -o masking --json", "edit-trail find -o crop --format csv", "edit-trail find -o denoise -o crop --match all", "edit-trail find -o exposure -o contrast --match any", "edit-trail find -o perspective --limit 20", "edit-trail report --output full-audit.html", "edit-trail report -o masking --output masking-audit.html", "edit-trail find -o lens-correction --json", "edit-trail find -o vignette --format csv", "edit-trail find -o color-balance-rgb --json", "edit-trail index ~/Pictures --include-hidden", "edit-trail find -o denoise --limit 1 --open"].join("\n");
+    const recipes = ["# Edit Trail archive audit commands", "edit-trail find -o masking --json", "edit-trail find -o crop --format csv", "edit-trail find -o denoise -o crop --match all", "edit-trail find -o exposure -o contrast --match any", "edit-trail find -o perspective --limit 20", "edit-trail report --output full-audit.html", "edit-trail report -o masking --output masking-audit.html", "edit-trail find -o lens-correction --json", "edit-trail find -o vignette --format csv", "edit-trail find -o color-balance-rgb --json", "edit-trail index ~/Pictures --include-hidden", "edit-trail find -o denoise --limit 1 --open"].join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([recipes], { type: "text/plain" }));
-    link.download = "edit-trail-audit-recipes.txt";
+    link.download = "edit-trail-audit-commands.txt";
     link.click();
     URL.revokeObjectURL(link.href);
   });

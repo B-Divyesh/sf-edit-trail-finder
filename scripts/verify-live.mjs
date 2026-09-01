@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const base = (process.argv[2] ?? "https://edit-trail-finder.sociobot.in").replace(/\/$/, "");
-const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-3-live");
+const evidence = resolve(process.argv[3] ?? ".factory/evidence/polish-4-live");
 await mkdir(evidence, { recursive: true });
 const browser = await chromium.launch();
 const report = { base, checks: [], consoleErrors: [], externalRequests: [], axeViolations: [] };
@@ -29,9 +29,27 @@ try {
   check(response?.status() === 200, "home returns 200");
   check(await page.title() === "Edit Trail — Find photos by what you did to them", "home has its route title");
   check(await page.locator("h1").count() === 1 && await page.locator("main").count() === 1, "home has one h1 and one main");
+  check((await page.locator(".hero-facts").innerText()).includes("Sidecars stay on your computer"), "first-screen privacy fact says sidecars stay on the computer");
+  check((await page.locator(".hero-facts").innerText()).includes("Free to use · MIT licensed"), "first-screen price fact says free to use");
+  check(await page.locator(".action-note").innerText() === "Opens three samples and shows two matches.", "sample outcome is stated beside the sample action");
   check(!(await page.locator("body").innerText()).includes("247"), "unproved 247 count is absent");
-  check((await page.locator("body").innerText()).includes("Malformed sidecars are recorded as warnings, and scanning continues."), "plain scan wording is live");
-  check((await page.locator("body").innerText()).includes("CLI commands for sidecar searches"), "descriptive CLI heading is live");
+  const homeText = await page.locator("body").innerText();
+  for (const text of ["What Edit Trail does not do", "It does not render, organise, upload, or edit photos.", "How Edit Trail searches sidecars", "Scan XMP, DOP, and PP3 sidecars in every subfolder.", "Find files with selected edits", "Your sidecars stay in this tab and are never uploaded.", "CLI behavior and outputs", "Free example commands", "Download 12 archive audit commands", "Example search commands"]) {
+    check(homeText.includes(text), `round-four plain copy is live: ${text}`);
+  }
+  for (const absent of ["Index editing steps in three commands", "CLI behavior on large archives", "Free command recipes", "audit recipes", "Query combinations", "Parsing stays in this tab", "recursively"]) {
+    check(!homeText.includes(absent), `removed round-four wording is absent: ${absent}`);
+  }
+  check(await page.getByRole("tab", { name: "Count JSON results" }).count() === 1, "JSON tab names its result");
+  check(await page.getByRole("button", { name: "Download audit commands" }).count() === 1, "audit command download uses a concrete action label");
+  for (const label of ["Download for Linux x64", "Download for macOS Apple silicon", "Download for macOS Intel", "Download for Windows x64"]) {
+    check(await page.getByRole("link", { name: label, exact: true }).count() === 1, `native download has verb-first label: ${label}`);
+  }
+  const recording = page.locator("img[data-cli-recording]");
+  check(await recording.count() === 1 && await recording.getAttribute("src") === "/edit-trail-demo.svg", "self-hosted CLI terminal recording is on the landing page");
+  check((await page.locator("[data-cli-transcript]").innerText()).includes('"sidecars": 3') && (await page.locator("[data-cli-transcript]").innerText()).includes('"matches": 2'), "CLI transcript records the three-sidecar, two-match result");
+  const recordingResponse = await context.request.get(`${base}/edit-trail-demo.svg`);
+  check(recordingResponse.ok() && (await recordingResponse.text()).includes("edit-trail demo"), "CLI recording loads from the product origin");
   check(/exports\s+JSON/i.test(await page.locator(".proof-strip").innerText()), "JSON fact names its output");
   const internalLinks = await page.locator("a[href]").evaluateAll((links, origin) => [...new Set(links.map((link) => new URL(link.getAttribute("href"), origin).href).filter((href) => new URL(href).origin === origin))], base);
   for (const href of internalLinks) {
@@ -52,6 +70,8 @@ try {
   const desktopFact = await page.locator(".hero-facts li").last().boundingBox();
   check(Boolean(desktopFact && desktopFact.y + desktopFact.height <= 900), "desktop first-screen facts fit the viewport");
   await page.screenshot({ path: resolve(evidence, "home-desktop.png"), fullPage: true });
+  await page.locator(".cli-recording").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: resolve(evidence, "cli-demo-recording.png"), fullPage: false });
 
   const trigger = page.getByRole("link", { name: "Try it with sample data" });
   await trigger.focus();
@@ -78,11 +98,11 @@ try {
   check(await trigger.evaluate((element) => element === document.activeElement), "browser Back restores the demo trigger focus");
 
   const recipeDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download audit recipes" }).click();
+  await page.getByRole("button", { name: "Download audit commands" }).click();
   const recipePath = await (await recipeDownload).path();
   const recipes = await readFile(recipePath, "utf8");
-  check(recipes.split("\n").filter((line) => line.startsWith("edit-trail ")).length === 12, "live recipe pack contains 12 commands");
-  check(recipes.includes("edit-trail find -o denoise --limit 1 --open"), "live recipe pack contains the tested folder-opening command");
+  check(recipes.split("\n").filter((line) => line.startsWith("edit-trail ")).length === 12, "live audit command pack contains 12 commands");
+  check(recipes.includes("edit-trail find -o denoise --limit 1 --open"), "live command pack contains the tested folder-opening command");
 
   await page.goto(`${base}/?demo=1`, { waitUntil: "networkidle" });
   check(page.url() === `${base}/demo/`, "?demo=1 enters the real demo route");
@@ -113,6 +133,12 @@ try {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  const [sampleActionBox, outcomeBox, installBox] = await Promise.all([
+    page.getByRole("link", { name: "Try it with sample data" }).boundingBox(),
+    page.locator(".action-note").boundingBox(),
+    page.locator(".install-actions").boundingBox()
+  ]);
+  check(Boolean(sampleActionBox && outcomeBox && installBox && outcomeBox.y >= sampleActionBox.y + sampleActionBox.height && outcomeBox.y + outcomeBox.height <= installBox.y), "mobile sample outcome stays directly under its action");
   const mobileFact = await page.locator(".hero-facts li").last().boundingBox();
   check(Boolean(mobileFact && mobileFact.y + mobileFact.height <= 844), "mobile first-screen facts fit the viewport");
   check(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth), "mobile home has no horizontal overflow");

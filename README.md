@@ -5,15 +5,16 @@ their editing steps. It indexes XMP, DOP, and PP3 sidecars from common RAW
 editors. It normalises active editing steps, then searches combinations such
 as `denoise + crop`.
 
-It never reads or uploads image pixels. Open the product site and sample demo
-at [edit-trail-finder.sociobot.in](https://edit-trail-finder.sociobot.in).
-The demo uses browser memory and does not upload selected sidecars.
+It never reads or uploads image pixels. Open the
+[product site](https://edit-trail-finder.sociobot.in). Open the
+[sample demo](https://edit-trail-finder.sociobot.in/demo/) directly. The demo
+uses browser memory and does not upload selected sidecars.
 
 ## Install
 
 Download the native executable for Linux x64, macOS arm64, macOS x64, or
-Windows x64 from the product site. You can also build from source with a
-current Rust toolchain:
+Windows x64 from the product site. You can also build from source with Rust
+1.85 or newer:
 
 ```sh
 cargo install --path .

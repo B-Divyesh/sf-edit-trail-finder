@@ -59,7 +59,7 @@ commands and report samples.
 - On narrow screens, the shared navigation folds into a cyan-edged market
   directory. Its squared panel and pink offset shadow reuse the work-order
   language; Escape closes it and returns focus to its labeled trigger.
-- The warm clipped ticket now contains free audit recipes. It keeps the
+- The warm clipped ticket now contains free audit commands. It keeps the
   work-order shape language without advertising an unavailable paid service.
 
 Motion lasts 160–260 ms and uses only opacity/transform. Nothing flashes or
@@ -87,6 +87,12 @@ image generator, then resized/encoded as WebP at or below 300 KB. Prompt:
 
 The route diagram, icons, wordmark, and operation tokens are hand-authored in
 HTML/CSS/SVG inside the repository and are MIT-licensed with the product.
+`edit-trail-demo.svg` is a self-hosted terminal recording generated during each
+site build by `scripts/record-cli-demo.mjs`. The script runs the shipped Linux
+binary with `edit-trail demo --output <temporary directory> --json`, asserts
+the real three-sidecar/two-match result, and renders that captured output as
+an SVG. The visible transcript repeats it in HTML; the temporary path alone is
+shortened. It is not generated imagery and has no external licence.
 The raster was generated on 27 August 2026 with the factory `factory-image`
 deployment, then stripped and converted from PNG to a 148 KB WebP using
 ImageMagick. The final asset is original to this product and distributed under

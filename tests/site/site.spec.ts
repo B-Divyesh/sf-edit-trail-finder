@@ -124,7 +124,7 @@ test("reduced motion removes long transitions and smooth scrolling", async ({ pa
 test("@claim:linux-download browser receives the release executable, not HTML", async ({ page }) => {
   await page.goto("/");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("link", { name: "Download for Linux" }).click();
+  await page.getByRole("link", { name: "Download for Linux", exact: true }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("edit-trail-linux-x86_64");
   const path = await download.path();
@@ -157,12 +157,12 @@ test("@claim:cross-platform-downloads exposes executable bytes for every named p
   expect(await lifetimeProbe.text()).toContain("Find RAW photos by editing steps");
 });
 
-test("@claim:recipe-download audit recipes download without an account", async ({ page }) => {
+test("@claim:recipe-download audit commands download without an account", async ({ page }) => {
   await page.goto("/#recipes");
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download audit recipes" }).click();
+  await page.getByRole("button", { name: "Download audit commands" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("edit-trail-audit-recipes.txt");
+  expect(download.suggestedFilename()).toBe("edit-trail-audit-commands.txt");
   const path = await download.path();
   const recipes = readFileSync(path!, "utf8");
   const commands = recipes.split("\n").filter((line) => line.startsWith("edit-trail "));
@@ -250,6 +250,57 @@ test("first-screen facts stay inside desktop and mobile viewports", async ({ pag
   }
 });
 
+test("round-four landing copy names the outcome, limits, commands, and downloads", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const sampleAction = page.getByRole("link", { name: "Try it with sample data" });
+  const outcome = page.locator(".action-note");
+  const installActions = page.locator(".install-actions");
+  expect(await outcome.innerText()).toBe("Opens three samples and shows two matches.");
+  const [sampleBox, outcomeBox, installBox] = await Promise.all([sampleAction.boundingBox(), outcome.boundingBox(), installActions.boundingBox()]);
+  expect(sampleBox && outcomeBox && installBox).toBeTruthy();
+  expect(outcomeBox!.y).toBeGreaterThanOrEqual(sampleBox!.y + sampleBox!.height);
+  expect(outcomeBox!.y + outcomeBox!.height).toBeLessThanOrEqual(installBox!.y);
+  await expect(page.locator(".hero-facts")).toContainText("Sidecars stay on your computer");
+  await expect(page.locator(".hero-facts")).toContainText("Free to use · MIT licensed");
+  await expect(page.getByRole("heading", { name: "What Edit Trail does not do" })).toBeVisible();
+  await expect(page.locator(".limits")).toContainText("It does not render, organise, upload, or edit photos.");
+  await expect(page.getByRole("heading", { name: "How Edit Trail searches sidecars" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Find files with selected edits" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "CLI behavior and outputs" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Download 12 archive audit commands" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Example search commands" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Count JSON results" })).toBeVisible();
+  for (const name of ["Download for Linux x64", "Download for macOS Apple silicon", "Download for macOS Intel", "Download for Windows x64"]) {
+    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
+  }
+  await expect(page.locator("body")).not.toContainText("recursively");
+  await expect(page.locator("body")).not.toContainText("Parsing stays in this tab");
+  await expect(page.locator("body")).not.toContainText("audit recipes");
+});
+
+test("@claim:cli-demo-recording landing page carries a self-hosted recording and matching text transcript", async ({ page, request }) => {
+  const externalRequests: string[] = [];
+  page.on("request", (event) => {
+    if (new URL(event.url()).origin !== "http://127.0.0.1:4173") externalRequests.push(event.url());
+  });
+  await page.goto("/");
+  const recording = page.locator("img[data-cli-recording]");
+  await expect(recording).toBeVisible();
+  await expect(recording).toHaveAttribute("src", "/edit-trail-demo.svg");
+  await expect(page.getByRole("heading", { name: "Watch the CLI demo run" })).toBeVisible();
+  await expect(page.locator("[data-cli-transcript]")).toContainText("edit-trail demo --output <temporary-directory> --json");
+  await expect(page.locator("[data-cli-transcript]")).toContainText('"sidecars": 3');
+  await expect(page.locator("[data-cli-transcript]")).toContainText('"matches": 2');
+  const svg = await request.get("/edit-trail-demo.svg");
+  expect(svg.ok()).toBe(true);
+  const source = await svg.text();
+  expect(source).toContain("edit-trail demo");
+  expect(source).toContain("&quot;sidecars&quot;: 3");
+  expect(source).toContain("&quot;matches&quot;: 2");
+  expect(externalRequests).toEqual([]);
+});
+
 test("@claim:browser-local demo parses selected files without an upload", async ({ page }) => {
   const externalRequests: string[] = [];
   const demoRequests: string[] = [];
@@ -300,11 +351,11 @@ test("@claim:browser-sidecar-formats browser demo accepts XMP, DOP, and PP3 side
   await expect(page.locator("[data-demo-results]")).toContainText("DxO PhotoLab");
 });
 
-test("@claim:mit-license ships the MIT license and identifies it in the first-screen facts", async ({ page }) => {
+test("@claim:mit-license ships the MIT license and identifies the free first-screen fact", async ({ page }) => {
   expect(existsSync(resolve("LICENSE"))).toBe(true);
   expect(readFileSync(resolve("LICENSE"), "utf8")).toContain("Permission is hereby granted, free of charge");
   await page.goto("/");
-  await expect(page.locator(".hero-facts")).toContainText("MIT licensed");
+  await expect(page.locator(".hero-facts")).toContainText("Free to use · MIT licensed");
 });
 
 test("@claim:offline-reload demo and legal routes reopen with their own content while offline", async ({ browser }) => {
@@ -498,6 +549,52 @@ test("@claim:cli-private-read-only CLI makes no network call and leaves source s
     }
     expect(existsSync(networkLog) ? readFileSync(networkLog, "utf8") : "").toBe("");
     for (const name of sidecars) {
+      const before = snapshot.get(name)!;
+      const path = join(archive, name);
+      const after = statSync(path);
+      expect(readFileSync(path)).toEqual(before.bytes);
+      expect(after.mode).toBe(before.mode);
+      expect(after.mtimeMs).toBe(before.mtimeMs);
+    }
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+});
+
+test("@claim:local-only-boundary CLI reads sidecars without changing or uploading source photos", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "One Linux CLI sandbox run is sufficient");
+  const work = mkdtempSync(join(tmpdir(), "edit-trail-boundary-"));
+  const archive = join(work, "archive");
+  try {
+    cpSync(resolve("examples/sample-archive"), archive, { recursive: true });
+    const sourcePhoto = join(archive, "night-market-1842.NEF");
+    writeFileSync(sourcePhoto, "PRIVATE_PIXEL_MARKER");
+    const sources = [
+      "night-market-1842.NEF.xmp",
+      "lantern-0917.ARW.dop",
+      "after-rain-2201.RAF.pp3",
+      "night-market-1842.NEF"
+    ];
+    const snapshot = new Map(sources.map((name) => {
+      const path = join(archive, name);
+      const metadata = statSync(path);
+      return [name, { bytes: readFileSync(path), mode: metadata.mode, mtimeMs: metadata.mtimeMs }];
+    }));
+    const interceptor = join(work, "network-deny.so");
+    execFileSync("cc", ["-shared", "-fPIC", "-o", interceptor, resolve("tests/network-deny.c")]);
+    const networkLog = join(work, "network-attempts.log");
+    const environment = { ...process.env, LD_PRELOAD: interceptor, EDIT_TRAIL_NETWORK_LOG: networkLog };
+    const binary = resolve("target/release/edit-trail");
+    const index = join(work, "trail.json");
+    const report = join(work, "report.html");
+    for (const args of [["index", archive, "--output", index, "--json"], ["report", "--index", index, "--output", report]]) {
+      const result = spawnSync(binary, args, { encoding: "utf8", env: environment });
+      expect(result.status, result.stderr).toBe(0);
+    }
+    const output = `${readFileSync(index, "utf8")}\n${readFileSync(report, "utf8")}`;
+    expect(output).not.toContain("PRIVATE_PIXEL_MARKER");
+    expect(existsSync(networkLog) ? readFileSync(networkLog, "utf8") : "").toBe("");
+    for (const name of sources) {
       const before = snapshot.get(name)!;
       const path = join(archive, name);
       const after = statSync(path);

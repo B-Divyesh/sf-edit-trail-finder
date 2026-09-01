@@ -63,7 +63,14 @@ describe("Azure Static Web Apps response policy", () => {
     const combined = productSources.join("\n");
     expect(combined).not.toContain("api.sociobot.in");
     expect(combined).not.toMatch(/checkout|\/verify\?license|sb_license:/i);
-    expect(combined).toContain("Download audit recipes");
+    expect(combined).toContain("Download audit commands");
+  });
+
+  it("documents the direct isolated demo route and the exact Rust minimum", async () => {
+    const readme = await readFile(resolve("README.md"), "utf8");
+    expect(readme).toContain("[sample demo](https://edit-trail-finder.sociobot.in/demo/)");
+    expect(readme).toContain("Rust\n1.85 or newer");
+    expect(readme).not.toContain("current Rust toolchain");
   });
 
   it("keeps every registered claim mapped to exactly one tagged test", async () => {

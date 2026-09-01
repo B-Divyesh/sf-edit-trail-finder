@@ -17,6 +17,13 @@ const page = await readFile(resolve(root, "index.html"), "utf8");
 if (!page.includes('href="/downloads/edit-trail-linux-x86_64"')) {
   throw new Error("The landing page does not point to the deployed executable");
 }
+const recording = await readFile(resolve(root, "edit-trail-demo.svg"), "utf8");
+if (!recording.includes("edit-trail demo") || !recording.includes("&quot;sidecars&quot;: 3") || !recording.includes("&quot;matches&quot;: 2")) {
+  throw new Error("The landing page is missing the generated CLI demo recording");
+}
+if (!page.includes('src="/edit-trail-demo.svg"') || !page.includes("data-cli-transcript")) {
+  throw new Error("The landing page does not expose the CLI recording and text transcript");
+}
 
 const nativeDownloads = [
   ["edit-trail-macos-arm64", Buffer.from([0xcf, 0xfa, 0xed, 0xfe])],
@@ -34,4 +41,4 @@ for (const [name, magic] of nativeDownloads) {
   }
 }
 
-console.log(`Verified deployable native executables (Linux ${binary.length} bytes plus macOS and Windows)`);
+console.log(`Verified deployable native executables and generated CLI recording (Linux ${binary.length} bytes plus macOS and Windows)`);

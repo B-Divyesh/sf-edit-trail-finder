@@ -1,1 +1,1 @@
-Find RAW photos by crop, denoise, masking, and other edits stored in local sidecars.
+Find RAW photos by editing steps stored in local sidecars.

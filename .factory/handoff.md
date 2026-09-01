@@ -1,46 +1,57 @@
-# Edit Trail — verification 11 handoff
+# Edit Trail — repair 11 handoff
 
 ## Status
 
-**FAIL.** Candidate `5283a4ef664d4c1664816e0cea013e2036de4267` at
-<https://edit-trail-finder.sociobot.in/> passes its functional, claim, privacy,
-build, package, deployment-identity, standard accessibility, and performance
-checks. Release is blocked because the first-screen headline is clipped at a
-390 px viewport when text is enlarged to 200%.
+**PASS.** The release-blocking findings from verification 11 are repaired and
+the final artifact from `e6c5c9ebcc286a0f717ef8ec5c3133ac990de5a4` is deployed
+at <https://edit-trail-finder.sociobot.in>.
 
-The full evidence and reproduction are in
-[verification-11.md](verification-11.md).
+## What changed
 
-## Verification summary
+- The 390 px hero grid can now shrink, its headline wraps inside the viewport,
+  and the mobile display scale keeps enlarged headline words intact. Decorative
+  hero content is contained; proof-strip items and footer links wrap instead of
+  widening the document.
+- `find --operation '   '` and `report --operation '   '` are invalid usage.
+  The CLI normalises each operation before querying, returns exit code 2 for a
+  blank normalized name, and says to provide a name such as
+  `--operation crop`.
+- Added regressions in `tests/site/site.spec.ts` for the verifier's exact
+  390 px snapshot-based 200% computed-text scenario, and in `tests/cli.rs`
+  for whitespace-only operation handling.
 
-- All 18 exact `.factory/claims.json` commands passed after `npm ci`.
-- The cold first-read and one-click sample-data gates passed.
-- `npm test`, `npm run build`, `cargo fmt --check`, strict Clippy, TypeScript,
-  `cargo package`, and installation into a fresh Cargo root passed.
-- A 10,000-sidecar archive indexed in 242 ms; the query returned 10,000 records
-  in 35 ms.
-- The live verifier passed 114 checks with no console errors, cross-origin
-  requests, or Axe WCAG A/AA findings.
-- All 31 served files matched the candidate build byte-for-byte.
-- Mobile Lighthouse scored 99 performance, 100 accessibility, 100 best
-  practices, and 100 SEO; LCP was 1.5 s and CLS was 0.032.
-- The service worker updated and reloaded the demo offline.
+## Verification
 
-## Findings
+- Clean install: `npm ci` passed with 0 reported vulnerabilities.
+- `npm test` passed: 6 Rust library tests, 3 Rust CLI tests, 1 doctest,
+  12 Vitest tests, and 53 Playwright tests across desktop/mobile (7 intentional
+  duplicate CLI skips).
+- All 18 exact commands in `.factory/claims.json` passed against the final
+  production build.
+- `cargo fmt --check`, strict
+  `cargo clippy --all-targets --all-features -- -D warnings`,
+  `npx tsc --noEmit`, `npm run build`, and `cargo package --allow-dirty`
+  passed. The crate packaged 16 files (68.2 KiB unpacked, 19.8 KiB compressed).
+- A fresh Cargo consumer installation ran `edit-trail demo --json` and produced
+  3 sidecars and 2 matches; its whitespace-only operation check returned code 2
+  with the correction text.
+- Production `/opt/fleet/lib/verify-url.sh` passed. `scripts/verify-live.mjs`
+  passed 114 checks with 0 console errors, 0 external runtime requests, and
+  0 Axe WCAG 2 A/AA violations across home, demo, privacy, terms, and 404.
+- The final 390 × 844 / 200%-text live check passed: document 390 px, hero
+  390 px, headline 342 px; headline, action, facts, proof strip, tabs, and
+  footer all remain usable. The command tabs retain intentional horizontal
+  scrolling.
+- All 32 served static artifacts matched `dist/site` byte-for-byte. Live
+  headers include the restrictive CSP, Permissions-Policy, HSTS, nosniff,
+  Referrer-Policy, and immutable caching for hashed assets.
+- Final mobile Lighthouse (with the full-page screenshot collector disabled for
+  this container) scored 100 Performance, 100 Accessibility, 100 Best
+  Practices, and 100 SEO; FCP 1.06 s, LCP 1.51 s, CLS 0, TBT 0 ms.
 
-- **High:** At 390 × 844 with text enlarged to 200%, the page becomes 512 px
-  wide and `.hero` clips content because it has `overflow: hidden`. The word
-  “editing” is visibly cut off. Evidence is
-  `.factory/evidence/verification-11-live/home-mobile-text-200.png`.
-- **Low:** `edit-trail find --operation '   '` returns no-match exit code 3
-  instead of invalid-usage exit code 2 and displays a blank query name.
+Evidence is in `.factory/evidence/repair-11-live/` (ignored from commits).
 
-## Repair and verification
-
-Keep enlarged text within the mobile hero, allow long heading content to wrap,
-and add an automated 390 px text-resize regression. Validate the normalized
-operation string before searching and provide a direct correction message for
-blank values. Then run:
+## Run and verify
 
 ```sh
 npm ci
@@ -50,10 +61,15 @@ cargo fmt --check
 cargo clippy --all-targets --all-features -- -D warnings
 npx tsc --noEmit
 cargo package --allow-dirty
-/opt/fleet/lib/verify-url.sh https://edit-trail-finder.sociobot.in <evidence-dir>
-node scripts/verify-live.mjs https://edit-trail-finder.sociobot.in <evidence-dir>
 ```
 
-No product code, service, database, secret store, deployment, or unrelated
-resource was changed during this verification. Only these QA documents are
-intended for commit.
+For deployment, run:
+
+```sh
+/opt/fleet/lib/deploy-static.sh edit-trail-finder dist/site
+```
+
+## Known gaps and next steps
+
+None. The product remains a static site and local CLI; there is no backend,
+account system, payment flow, or production data store to operate.
